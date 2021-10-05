@@ -167,7 +167,7 @@ class VideoManagerPro
     if ($ownerGroupID != 0)
       $data['ownerGroupId'] =  $ownerGroupID;
     $result = $this->callPublicAPI($this->VideoManagerID.'/channels',$data, CURLOPT_POST, true);
-		preg_match('|Location: *'.self::publicApiPath.'[0-9]*/channels/([0-9]*)|',$result,$match);
+		preg_match('|Location: *'.self::publicApiPath.'[0-9]*/channels/([0-9]*)|i',$result,$match);
 
     if (is_array($match) && isset($match[1]))
 			$list = $match[1];
@@ -245,7 +245,7 @@ class VideoManagerPro
 		if ($groupID != 0)
 			$data['group'] = $groupID;
     $result = $this->callPublicAPI($this->VideoManagerID.'/videos', $data, CURLOPT_POST, true);
-		preg_match('|Location: *'.self::publicApiPath.'[0-9]*/videos/([^[:space:]]*)|',$result,$match);
+		preg_match('|Location: *'.self::publicApiPath.'[0-9]*/videos/([^[:space:]]*)|i',$result,$match);
 		if (is_array($match) && isset($match[1]))
 			$list = ['id' => $match[1] ];
 		else
@@ -257,7 +257,7 @@ class VideoManagerPro
   public function getUploadURL($videoID)
   {
     $result = $this->callPublicAPI($this->VideoManagerID.'/videos/'.$videoID.'/url',[], CURLOPT_HTTPGET, true);
-    preg_match('|Location: *(http[^[:space:]]*)|',$result,$match);
+    preg_match('|Location: *(http[^[:space:]]*)|i',$result,$match);
 		if (is_array($match) && isset($match[1]))
 			$list = ['upload_url' => $match[1] ];
 		else
@@ -304,7 +304,7 @@ class VideoManagerPro
         'telephone' => ''
       ];
       $result = $this->callPrivateAPI($this->VideoManagerID.'/users', $data, CURLOPT_POST, true);
-      preg_match('|Location: *'.self::privateApiPath.'[0-9]*/users/([0-9]*)|',$result,$match);
+      preg_match('|Location: *'.self::privateApiPath.'[0-9]*/users/([0-9]*)|i',$result,$match);
   		if (is_array($match) && isset($match[1])) {
         $this->addUserToGroup($match[1],$this->getDefaultGroup(),$companyRoleID);
   			$list = $match[1];
@@ -332,7 +332,7 @@ class VideoManagerPro
       $data['description'] = $description;
       $result = $this->callPrivateAPI($this->VideoManagerID.'/groups',$data,CURLOPT_POST, true);
 
-  		preg_match('|Location: *'.self::privateApiPath.'[0-9]*/groups/([0-9]*)|',$result,$match);
+  		preg_match('|Location: *'.self::privateApiPath.'[0-9]*/groups/([0-9]*)|i',$result,$match);
   		if (is_array($match) && isset($match[1]))
   			$list = $match[1];
   		else
@@ -425,7 +425,7 @@ class VideoManagerPro
         $data['roleId'] = $roleID;
         $result = $this->callPrivateAPI($this->VideoManagerID.'/saml-ownership-mapping',$data,CURLOPT_POST, true);
 
-    		preg_match('|Location: *'.self::privateApiPath.'[0-9]*/saml-ownership-mapping/([0-9]*)|',$result,$match);
+    		preg_match('|Location: *'.self::privateApiPath.'[0-9]*/saml-ownership-mapping/([0-9]*)|i',$result,$match);
     		if (is_array($match) && isset($match[1]))
     			$list = $match[1];
     		else
