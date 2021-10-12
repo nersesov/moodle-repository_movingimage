@@ -80,7 +80,8 @@ class repository_movingimagepicker extends repository {
 	// list of all option parameters defined by this repository
   public static function get_type_option_names() {
     return array('pluginname','vmproid', 'login', 'password', 'playerid', 'sortby','sortasc','sso','idphint','client',
-		             'vmprologin','autocreateuser','usercompanyrole','adminrole','autocreategroup','autocreatechannel','usergrouprole','rootchannel');
+		             'vmprologin','autocreateuser','usercompanyrole','adminrole','autocreategroup','autocreatechannel',
+					 'miuserfield','usergrouprole','rootchannel');
   }
 
 
@@ -109,73 +110,81 @@ class repository_movingimagepicker extends repository {
 		}
 
 		// Provide text input for movingimage EVP admin credentials
-    $mform->addElement('text', 'login', get_string('login', 'repository_movingimagepicker'));
-    $mform->setType('login', PARAM_RAW_TRIMMED);
+    	$mform->addElement('text', 'login', get_string('login', 'repository_movingimagepicker'));
+    	$mform->setType('login', PARAM_RAW_TRIMMED);
 		$mform->addRule('login', null, 'required', null, 'client');
 
 		// Provide masked text input for movingimage EVP admin password
-    $mform->addElement('password', 'password', get_string('password', 'repository_movingimagepicker'));
-    $mform->setType('password', PARAM_RAW_TRIMMED);
+    	$mform->addElement('password', 'password', get_string('password', 'repository_movingimagepicker'));
+    	$mform->setType('password', PARAM_RAW_TRIMMED);
 		$mform->addRule('password', null, 'required', null, 'client');
 
 		// Provide numeric input for movingimage EVP account ID
-    $mform->addElement('text', 'vmproid', get_string('vmproid', 'repository_movingimagepicker'));
-    $mform->setType('vmproid', PARAM_INT);
+    	$mform->addElement('text', 'vmproid', get_string('vmproid', 'repository_movingimagepicker'));
+    	$mform->setType('vmproid', PARAM_INT);
 		$mform->addRule('vmproid', null, 'required', null, 'client');
 		$mform->addRule('vmproid', null, 'numeric', null, 'client');
 
 		// Provide text input for player ID
-    $mform->addElement('text', 'playerid', get_string('playerid', 'repository_movingimagepicker'));
-    $mform->setType('playerid', PARAM_RAW_TRIMMED);
+    	mform->addElement('text', 'playerid', get_string('playerid', 'repository_movingimagepicker'));
+    	$mform->setType('playerid', PARAM_RAW_TRIMMED);
 		$mform->addRule('playerid', null, 'required', null, 'client');
 
 		// Provide numeric input for video root channel ID
 		$mform->addElement('text', 'rootchannel', get_string('rootchannel', 'repository_movingimagepicker'));
-    $mform->setType('rootchannel', PARAM_INT);
+    	$mform->setType('rootchannel', PARAM_INT);
 		$mform->addRule('rootchannel', null, 'numeric', null, 'client');
 		$mform->setDefault('rootchannel', 0);
 
 		// Provide text input for sorting field name
-    $mform->addElement('text', 'sortby', get_string('sortby', 'repository_movingimagepicker'));
-    $mform->setType('sortby', PARAM_RAW_TRIMMED);
+    	$mform->addElement('text', 'sortby', get_string('sortby', 'repository_movingimagepicker'));
+    	$mform->setType('sortby', PARAM_RAW_TRIMMED);
 
 		// Provide checkbox for option to sort videos ascending
 		$mform->addElement('advcheckbox', 'sortasc', get_string('sortasc', 'repository_movingimagepicker'),'',[],array(0,1));
 		$mform->setType('sortasc', PARAM_INT);
-    $mform->setDefault('sortasc', 1);
+    	$mform->setDefault('sortasc', 1);
 
 		// Provide text input for login URL for VideoManager Pro
 		$mform->addElement('text', 'vmprologin', get_string('vmprologin', 'repository_movingimagepicker'));
-    $mform->setType('vmprologin', PARAM_RAW_TRIMMED);
+    	$mform->setType('vmprologin', PARAM_RAW_TRIMMED);
 		$mform->setDefault('vmprologin', 'https://vmpro.movingimage.com');
 
 		// Provide checkbox for enabling SSO login
 		$mform->addElement('advcheckbox', 'sso', get_string('sso', 'repository_movingimagepicker'),'',[],array(0,1));
 		$mform->setType('sso', PARAM_INT);
-    $mform->setDefault('sso', 0);
+    	$mform->setDefault('sso', 0);
 
 		// Provide text input for SSO IDP hint
 		$mform->addElement('text', 'idphint', get_string('idphint', 'repository_movingimagepicker'));
-    $mform->setType('idphint', PARAM_RAW_TRIMMED);
+    	$mform->setType('idphint', PARAM_RAW_TRIMMED);
 		$mform->disabledIf('idphint','sso');
 
 		// Provide text input for SSO client name
 		$mform->addElement('text', 'client', get_string('client', 'repository_movingimagepicker'));
-    $mform->setType('client', PARAM_RAW_TRIMMED);
+    	$mform->setType('client', PARAM_RAW_TRIMMED);
 		$mform->disabledIf('client','sso');
 
 		// Provide checkbox for auto-creation of non-existent users on SSO login
 		$mform->addElement('advcheckbox', 'autocreateuser', get_string('autocreateuser', 'repository_movingimagepicker'),'',[],array(0,1));
 		$mform->setType('autocreateuser', PARAM_INT);
-    $mform->setDefault('autocreateuser', 0);
+    	$mform->setDefault('autocreateuser', 0);
 		$mform->disabledIf('autocreateuser','sso');
+
+		
+		// Provide select field to be used in the auto-creation of non-existent users on SSO login
+		$mform->addElement('text', 'miuserfield', get_string('miuserfield', 'repository_movingimagepicker'));
+    	$mform->setType('miuserfield', PARAM_RAW_TRIMMED);
+		$mform->setDefault('miuserfield', 'email');
+		$mform->disabledIf('miuserfield','sso');
+		$mform->disabledIf('miuserfield','autocreateuser');
 
 		// Provide user role in company content group for non-existent on SSO login either as dropdown or as text input
 		if ($validVMPro) {
 			$mform->addElement('select', 'usercompanyrole', get_string('usercompanyrole', 'repository_movingimagepicker'),$options_roles);
 		} else {
 			$mform->addElement('text', 'usercompanyrole', get_string('usercompanyrole', 'repository_movingimagepicker'));
-	    $mform->setType('usercompanyrole', PARAM_INT);
+	    	$mform->setType('usercompanyrole', PARAM_INT);
 			$mform->addRule('usercompanyrole', null, 'numeric', null, 'client');
 		}
 		$mform->disabledIf('usercompanyrole','autocreateuser');
@@ -184,14 +193,14 @@ class repository_movingimagepicker extends repository {
 		// Provide checkbox for auto-creation of non-existent user channels on SSO login
 		$mform->addElement('advcheckbox', 'autocreatechannel', get_string('autocreatechannel', 'repository_movingimagepicker'),'',[],array(0,1));
 		$mform->setType('autocreatechannel', PARAM_INT);
-    $mform->setDefault('autocreatechannel', 0);
+    	$mform->setDefault('autocreatechannel', 0);
 		$mform->disabledIf('autocreatechannel','autocreateuser');
 		$mform->disabledIf('autocreatechannel','sso');
 
 		// Provide checkbox for auto-creation of non-existent user content groups on SSO login
 		$mform->addElement('advcheckbox', 'autocreategroup', get_string('autocreategroup', 'repository_movingimagepicker'),'',[],array(0,1));
 		$mform->setType('autocreategroup', PARAM_INT);
-    $mform->setDefault('autocreategroup', 0);
+    	$mform->setDefault('autocreategroup', 0);
 		$mform->disabledIf('autocreategroup','autocreateuser');
 		$mform->disabledIf('autocreategroup','sso');
 
@@ -200,7 +209,7 @@ class repository_movingimagepicker extends repository {
 			$mform->addElement('select', 'usergrouprole', get_string('usergrouprole', 'repository_movingimagepicker'),$options_roles);
 		} else {
 			$mform->addElement('text', 'usergrouprole', get_string('usergrouprole', 'repository_movingimagepicker'));
-	    $mform->setType('usergrouprole', PARAM_INT);
+	    	$mform->setType('usergrouprole', PARAM_INT);
 			$mform->addRule('usergrouprole', null, 'numeric', null, 'client');
 		}
 		$mform->disabledIf('usergrouprole','autocreategroup');
@@ -212,7 +221,7 @@ class repository_movingimagepicker extends repository {
 			$mform->addElement('select', 'adminrole', get_string('adminrole', 'repository_movingimagepicker'),$options_roles);
 		} else {
 			$mform->addElement('text', 'adminrole', get_string('adminrole', 'repository_movingimagepicker'));
-	    $mform->setType('adminrole', PARAM_INT);
+	    	$mform->setType('adminrole', PARAM_INT);
 			$mform->addRule('adminrole', null, 'numeric', null, 'client');
 		}
 		$mform->disabledIf('adminrole','autocreategroup');
@@ -229,7 +238,7 @@ class repository_movingimagepicker extends repository {
 		if (!$vmpro->login($data['login'], $data['password'], $data['vmproid'])) {
 
 			// Output login error
-      $errors['login'] = $errors['password'] = $errors['vmproid'] = get_string('admin_login_error', 'repository_movingimagepicker');
+      		$errors['login'] = $errors['password'] = $errors['vmproid'] = get_string('admin_login_error', 'repository_movingimagepicker');
 			return $errors;
 		}
 
@@ -238,7 +247,7 @@ class repository_movingimagepicker extends repository {
 		if (!isset($players[$data['playerid']]))
 			$errors['playerid'] = get_string('config_player_error', 'repository_movingimagepicker');
 
-	  // Check if root channel ID is set to invalid ID and output error message
+	  	// Check if root channel ID is set to invalid ID and output error message
 		if ($data['rootchannel'] != 0 && $data['rootchannel'] != null) {
 			$result = $vmpro->getChannels($data['rootchannel']);
 			if (!is_array($result) || !isset($result['id']) )
@@ -255,6 +264,16 @@ class repository_movingimagepicker extends repository {
 				$errors['idphint'] = get_string('config_idphint_error', 'repository_movingimagepicker');
 			if (empty($data['client']))
 				$errors['client'] = get_string('config_client_error', 'repository_movingimagepicker');
+		}
+		
+		// Get array of user fields in moodle
+		$userfields = get_user_fieldnames();
+
+		// Check if user property to be used for User account creation, group and channel actually exists
+		if ($data['autocreateuser'] == 1) {
+			if (!array_keys($userfields,$data['miuserfield'])){
+				$errors['miuserfield'] = get_string('config_miuserfield_error', 'repository_movingimagepicker');
+			}
 		}
 
 		// Get list of available user roles in movingmage EVP
@@ -443,7 +462,6 @@ class repository_movingimagepicker extends repository {
 		return $userID;
 	}
 
-
 	// Display content of repository window (display upload form)
   public function get_listing($path = '', $page = '') {
     global $OUTPUT;
@@ -451,9 +469,10 @@ class repository_movingimagepicker extends repository {
 		global $USER;
 
 		// If SSO is enabled, make sure user, group and channel exist before trying to log in
-		if ($this->get_movingimage_option('sso') == 1)
-		  $this->checkUserIDandCreateIfNeeded($USER->email);
-
+		if ($this->get_movingimage_option('sso') == 1){
+			$miuserfield = $this->get_movingimage_option('miuserfield');
+			$this->checkUserIDandCreateIfNeeded($USER->$miuserfield);
+		}
 		// If we do not have or get a valid access token
 		if (!$this->getMiAccessToken()) {
 
