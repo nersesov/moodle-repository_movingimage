@@ -267,14 +267,14 @@ class repository_movingimagepicker extends repository {
 		}
 		
 		// Get array of user fields in moodle
-		$userfields = get_user_fieldnames();
+		// $userfields = get_user_fieldnames();
 
 		// Check if user property to be used for User account creation, group and channel actually exists
-		if ($data['autocreateuser'] == 1) {
-			if (!array_keys($userfields,$data['miuserfield'])){
-				$errors['miuserfield'] = get_string('config_miuserfield_error', 'repository_movingimagepicker');
-			}
-		}
+		// if ($data['autocreateuser'] == 1) {
+		// 	if (!array_keys($userfields,$data['miuserfield'])){
+		// 		$errors['miuserfield'] = get_string('config_miuserfield_error', 'repository_movingimagepicker');
+		// 	}
+		// }
 
 		// Get list of available user roles in movingmage EVP
 		$roles = $vmpro->getRoles();
