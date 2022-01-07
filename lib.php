@@ -126,7 +126,7 @@ class repository_movingimagepicker extends repository {
 		$mform->addRule('vmproid', null, 'numeric', null, 'client');
 
 		// Provide text input for player ID
-    	mform->addElement('text', 'playerid', get_string('playerid', 'repository_movingimagepicker'));
+    	$mform->addElement('text', 'playerid', get_string('playerid', 'repository_movingimagepicker'));
     	$mform->setType('playerid', PARAM_RAW_TRIMMED);
 		$mform->addRule('playerid', null, 'required', null, 'client');
 
