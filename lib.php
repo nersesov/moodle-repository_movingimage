@@ -467,10 +467,13 @@ class repository_movingimagepicker extends repository {
     global $OUTPUT;
 		global $SESSION;
 		global $USER;
+	  	global $CFG;
 
 		// If SSO is enabled, make sure user, group and channel exist before trying to log in
 		if ($this->get_movingimage_option('sso') == 1){
 			$miuserfield = $this->get_movingimage_option('miuserfield');
+			require_once($CFG->dirroot.'/user/profile/lib.php');
+			profile_load_data($USER);
 			$this->checkUserIDandCreateIfNeeded($USER->$miuserfield);
 		}
 		// If we do not have or get a valid access token
