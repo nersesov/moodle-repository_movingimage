@@ -598,6 +598,7 @@ class repository_movingimagepicker extends repository {
 
 					// Create an array that contains all videos
 					foreach ($videos['videos'] as $video) {
+                        $videoChannelId = $channelid ?: $this->get_movingimage_option('rootchannel');
 						$results[] = array(
 								'title' => pathinfo($video['title'], PATHINFO_FILENAME).'.wmv',
 								'thumbnail' => $video['thumbnail'],
@@ -608,7 +609,7 @@ class repository_movingimagepicker extends repository {
 								'date' => $video['createdDate'] / 1000,
 								'datecreated' => $video['createdDate'] / 1000,
 								'datemodified' => $video['modifiedDate'] / 1000,
-								'source' => 'https://e.video-cdn.net/video?video-id='.$video['id'].'&player-id='.$this->get_movingimage_option('playerid')
+                                'source' => 'https://e.video-cdn.net/video?video-id=' . $video['id'] . '&player-id=' . $this->get_movingimage_option('playerid') . '&channel-id=' . intval($videoChannelId)
 						);
 					}
 
