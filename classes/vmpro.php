@@ -3,7 +3,7 @@
 /**
  * VideoManagerPro class
  *
- * @package    repository_movingimagepicker v2
+ * @package    repository_movingimagepicker
  * @copyright  2019 Rainer Möller
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -27,12 +27,48 @@ class VideoManagerPro
 	  $this->AccessToken = $token;
 	}
 
+  /**
+   * Test connection to movingimage API
+   * @return boolean True if connection is successful, false otherwise
+   */
+  public function testConnection() {
+    $result = $this->callPublicAPI('');
+    if ($result === false) {
+        error_log("movingimage testConnection: Connection failed");
+        return false;
+    }
+    
+    // Simple check if we got a valid response
+    if (strpos($result, '<title>Error</title>') !== false) {
+        error_log("movingimage testConnection: Received error page");
+        return false;
+    }
+    
+    error_log("movingimage testConnection: Connection successful");
+    return true;
+  }
+
 	public function tryAccessToken($vmproid, $token)	{
+    // Validate input parameters
+    if (empty($vmproid) || empty($token)) {
+        error_log("movingimage tryAccessToken: Missing required parameters - vmproid: " . (empty($vmproid) ? 'empty' : $vmproid) . ", token: " . (empty($token) ? 'empty' : 'provided'));
+        return false;
+    }
+
     $this->setAccessToken($vmproid, $token);
 	  $result = $this->callPublicAPI('');
+    
+    if ($result === false) {
+        error_log("movingimage tryAccessToken: API call failed");
+        $this->setAccessToken($vmproid, '');
+        return false;
+    }
+    
 	  if (strpos($result, '<title>Error</title>') === false) {
+      error_log("movingimage tryAccessToken: Token validation successful");
       return true;
     } else {
+      error_log("movingimage tryAccessToken: Token validation failed - received error page");
       $this->setAccessToken($vmproid,'');
       return false;
     }
@@ -49,6 +85,11 @@ class VideoManagerPro
   {
     $request = curl_init();
 
+    if (!$request) {
+        error_log("movingimage API Error: Failed to initialize cURL");
+        return false;
+    }
+
 		if ($mode == CURLOPT_HTTPGET)
 			$url = $apiPath.'?'.http_build_query($data,'', '&');
 		else  {
@@ -56,8 +97,16 @@ class VideoManagerPro
 			curl_setopt($request, CURLOPT_POSTFIELDS, json_encode($data));
 		}
 
-    curl_setopt($request, CURLOPT_SSL_VERIFYPEER, FALSE);
+    // Improved SSL and connection settings
+    curl_setopt($request, CURLOPT_SSL_VERIFYPEER, TRUE);
+    curl_setopt($request, CURLOPT_SSL_VERIFYHOST, 2);
     curl_setopt($request, CURLOPT_RETURNTRANSFER, TRUE);
+    curl_setopt($request, CURLOPT_TIMEOUT, 60);  // Increased timeout
+    curl_setopt($request, CURLOPT_CONNECTTIMEOUT, 30);  // Increased connection timeout
+    curl_setopt($request, CURLOPT_FOLLOWLOCATION, TRUE);
+    curl_setopt($request, CURLOPT_MAXREDIRS, 5);
+    curl_setopt($request, CURLOPT_USERAGENT, 'Moodle movingimage Connector v3.0');
+    
     switch ($mode) {
       case 'CURLOPT_PUT':
         curl_setopt($request, CURLOPT_CUSTOMREQUEST, 'PUT');
@@ -68,17 +117,46 @@ class VideoManagerPro
       default:
         curl_setopt($request, $mode, TRUE);
     }
+    
     curl_setopt($request, CURLOPT_URL, $url);
     if ($header)
 		  curl_setopt($request, CURLOPT_HEADER, TRUE);
 
-    if ($this->AccessToken !== null) {
+    if ($this->AccessToken !== null && !empty($this->AccessToken)) {
 		  curl_setopt($request, CURLOPT_HTTPHEADER, array('Content-Type: application/json','Authorization: Bearer '.$this->AccessToken));
-    } else
+    } else {
       curl_setopt($request, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+    }
 
     $result = curl_exec($request);
+    $httpcode = curl_getinfo($request, CURLINFO_HTTP_CODE);
+    $error = curl_error($request);
+    $errno = curl_errno($request);
     curl_close($request);
+    
+    // Enhanced error logging and handling
+    if ($result === false || !empty($error) || $errno !== 0) {
+        error_log("movingimage API cURL Error - URL: $url, Error: $error, Errno: $errno, HTTP: $httpcode");
+        return false;
+    }
+    
+    if ($httpcode >= 400) {
+        error_log("movingimage API HTTP Error - URL: $url, HTTP: $httpcode, Response: " . substr($result, 0, 500));
+        
+        // Try to parse error response
+        $errorResponse = json_decode($result, true);
+        if (is_array($errorResponse) && isset($errorResponse['message'])) {
+            error_log("movingimage API Error Message: " . $errorResponse['message']);
+        }
+        
+        return false;
+    }
+    
+    // Success logging for important operations
+    if (strpos($url, 'auth/login') !== false || strpos($url, 'videos') !== false) {
+        error_log("movingimage API Success - URL: $url, HTTP: $httpcode");
+    }
+    
     return $result;
   }
 
@@ -94,15 +172,36 @@ class VideoManagerPro
 
   public function login($username, $password, $vmproID = 0)
   {
+    // Validate input parameters
+    if (empty($username) || empty($password) || empty($vmproID)) {
+        error_log("movingimage login: Missing required parameters - username: " . (empty($username) ? 'empty' : 'provided') . ", password: " . (empty($password) ? 'empty' : 'provided') . ", vmproID: " . (empty($vmproID) ? 'empty' : $vmproID));
+        return false;
+    }
+
     $data = ['username' => $username, 'password' => $password];
+    error_log("movingimage login: Attempting login for user '$username' with VMPro ID '$vmproID'");
+    
     $result = $this->callPublicAPI('auth/login', $data, CURLOPT_POST);
+    
+    // Check if API call failed
+    if ($result === false) {
+        error_log("movingimage login: API call failed for user '$username'");
+        return false;
+    }
+    
     $result = json_decode($result, true);
 
-    if (is_array($result) && !isset($result['message'])) {
+    if (is_array($result) && !isset($result['message']) && isset($result['accessToken'])) {
       $this->AccessToken = $result['accessToken'];
-      $this->RefreshToken = $result['refreshToken'];
+      if (isset($result['refreshToken'])) {
+          $this->RefreshToken = $result['refreshToken'];
+      }
       $this->VideoManagerID = $vmproID;
+      error_log("movingimage login: Success for user '$username'");
 			return true;
+    } else {
+      $error_msg = isset($result['message']) ? $result['message'] : 'Unknown error - check credentials and VMPro ID';
+      error_log("movingimage login: Failed for user '$username' - $error_msg");
     }
     return false;
   }
@@ -184,6 +283,12 @@ class VideoManagerPro
 
   public function getVideos($channel = 0, $limit = 50, $offset = 0, $search = '', $sort = '', $sub_channels = false, $public = '', $sortasc = false, $channel_assignments = false)
   {
+    // Validate access token
+    if (empty($this->AccessToken)) {
+        error_log("movingimage getVideos: No access token available");
+        return false;
+    }
+
 		$data = array();
   	if ($channel !== 0)
   		$data['channel_id'] = $channel;
@@ -203,8 +308,30 @@ class VideoManagerPro
   	if ($sort != '')
   		$data['order_property'] = $sort;
 
-    $result = $this->callPublicAPI($this->VideoManagerID.'/videos', $data);
+    // Debug logging
+    $api_url = $this->VideoManagerID.'/videos';
+    error_log("movingimage getVideos: URL=$api_url, Channel=$channel, Data=" . json_encode($data));
+    
+    $result = $this->callPublicAPI($api_url, $data);
+    
+    if ($result === false) {
+        error_log("movingimage getVideos: API call failed");
+        return false;
+    }
+    
     $list = json_decode($result, true);
+    
+    // Enhanced error logging
+    if ($list === null) {
+        error_log("movingimage getVideos: JSON decode failed, raw response: " . substr($result, 0, 500));
+        return false;
+    } else if (!is_array($list)) {
+        error_log("movingimage getVideos: Invalid response format");
+        return false;
+    } else {
+        $video_count = isset($list['videos']) ? count($list['videos']) : 0;
+        error_log("movingimage getVideos: Success, found $video_count videos");
+    }
 
   	return $list;
   }
@@ -229,6 +356,18 @@ class VideoManagerPro
 
   public function createVideoEntity($filename, $title ='', $description = '', $keywords = array(), $channelID = 0, $groupID = 0, $autopublish = true)
   {
+    // Validate access token
+    if (empty($this->AccessToken)) {
+        error_log("movingimage createVideoEntity: No access token available");
+        return false;
+    }
+
+    // Validate required parameters
+    if (empty($filename)) {
+        error_log("movingimage createVideoEntity: filename is required");
+        return false;
+    }
+
 		$data = array();
 		$data['fileName'] = $filename;
 		$data['autoPublish'] = $autopublish;
@@ -244,24 +383,57 @@ class VideoManagerPro
 			$data['channel'] = $channelID;
 		if ($groupID != 0)
 			$data['group'] = $groupID;
+    
+    error_log("movingimage createVideoEntity: Creating video with filename='$filename', title='$title', channelID=$channelID");
     $result = $this->callPublicAPI($this->VideoManagerID.'/videos', $data, CURLOPT_POST, true);
+    
+    if ($result === false) {
+        error_log("movingimage createVideoEntity: API call failed");
+        return false;
+    }
+    
 		preg_match('|Location: *'.self::publicApiPath.'[0-9]*/videos/([^[:space:]]*)|i',$result,$match);
-		if (is_array($match) && isset($match[1]))
+		if (is_array($match) && isset($match[1])) {
 			$list = ['id' => $match[1] ];
-		else
+      error_log("movingimage createVideoEntity: Success - Video ID: " . $match[1]);
+    } else {
 			$list = $result;
+      error_log("movingimage createVideoEntity: Failed to parse video ID from response: " . substr($result, 0, 200));
+    }
 
 		return $list;
   }
 
   public function getUploadURL($videoID)
   {
+    // Validate access token
+    if (empty($this->AccessToken)) {
+        error_log("movingimage getUploadURL: No access token available");
+        return false;
+    }
+
+    // Validate required parameters
+    if (empty($videoID)) {
+        error_log("movingimage getUploadURL: videoID is required");
+        return false;
+    }
+
+    error_log("movingimage getUploadURL: Getting upload URL for video ID: $videoID");
     $result = $this->callPublicAPI($this->VideoManagerID.'/videos/'.$videoID.'/url',[], CURLOPT_HTTPGET, true);
+    
+    if ($result === false) {
+        error_log("movingimage getUploadURL: API call failed for video ID: $videoID");
+        return false;
+    }
+    
     preg_match('|Location: *(http[^[:space:]]*)|i',$result,$match);
-		if (is_array($match) && isset($match[1]))
+		if (is_array($match) && isset($match[1])) {
 			$list = ['upload_url' => $match[1] ];
-		else
+      error_log("movingimage getUploadURL: Success - Upload URL retrieved for video ID: $videoID");
+    } else {
 			$list = [];
+      error_log("movingimage getUploadURL: Failed to parse upload URL from response for video ID: $videoID");
+    }
 
     return $list;
   }
@@ -287,8 +459,7 @@ class VideoManagerPro
         }
 	    return 0;
   }
-
-  public function createUser($email, $sendActivationLink = true, $emailVerified = false, $enabled = false, $companyRoleID,
+  public function createUser($email, $companyRoleID, $sendActivationLink = true, $emailVerified = false, $enabled = false,
                              $locale = ['id' => 1, 'language' => 'de', 'country' => 'DE', 'languageTag' => 'de_DE'])
   {
       $data = [

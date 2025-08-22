@@ -1,0 +1,7 @@
+# Moodle build artifacts
+/node_modules/
+/vendor/
+.DS_Store
+*.log
+/localcache/
+/cache/

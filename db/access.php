@@ -17,7 +17,8 @@
 /**
  * repository_movingimageupload
  *
- * @package    repository_movingimageupload v2
+ * @package    repository_movingimagepicker
+ *
  * @copyright  2019 Rainer Möller
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
