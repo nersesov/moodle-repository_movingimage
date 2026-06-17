@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * repository_movingimageupload
+ * repository_movingimagepicker
  *
  * @package    repository_movingimagepicker
  *

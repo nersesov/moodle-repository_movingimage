@@ -39,10 +39,26 @@ echo $OUTPUT->header();
 
 echo html_writer::tag('h2', 'movingimage Connection Diagnostic');
 
+/**
+ * Read a picker connection option, preferring the current "repository_*" config
+ * name and falling back to the legacy name for backward compatibility.
+ *
+ * @param string $config Configuration key.
+ * @return string Configuration value, empty string if not set.
+ */
+function movingimage_get_picker_option(string $config): string {
+    $value = get_config('repository_movingimagepicker', $config);
+    if ($value !== false && $value !== '') {
+        return trim($value);
+    }
+    $value = get_config('movingimagepicker', $config);
+    return ($value !== false) ? trim($value) : '';
+}
+
 // Get configuration
-$login = get_config('movingimagepicker', 'login');
-$password = get_config('movingimagepicker', 'password');
-$vmproid = get_config('movingimagepicker', 'vmproid');
+$login = movingimage_get_picker_option('login');
+$password = movingimage_get_picker_option('password');
+$vmproid = movingimage_get_picker_option('vmproid');
 
 echo html_writer::tag('h3', 'Configuration Check');
 echo html_writer::start_tag('ul');
@@ -124,7 +140,7 @@ try {
         
         // Test 7: Channel access
         echo html_writer::tag('h4', '7. Channel Access Test');
-        $rootchannel = get_config('movingimagepicker', 'rootchannel');
+        $rootchannel = movingimage_get_picker_option('rootchannel');
         $channels = $vmpro->getChannels($rootchannel);
         if ($channels !== false && is_array($channels)) {
             echo html_writer::tag('p', '✓ Channel access successful', array('style' => 'color: green;'));

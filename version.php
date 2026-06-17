@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2025052800;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2026061701;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;        // Requires Moodle 4.5 or later.
 $plugin->component = 'repository_movingimagepicker'; // Full name of the plugin (used for diagnostics).
 $plugin->release = 'v3.0';

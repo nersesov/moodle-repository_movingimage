@@ -31,7 +31,6 @@ if (!class_exists('VideoManagerPro'))
 	require_once($CFG->dirroot . '/repository/movingimagepicker/classes/vmpro.php');
 
 
-
 class repository_movingimagepicker extends repository {
 
   const movingimage_THUMBS_PER_PAGE = 12;
@@ -55,10 +54,8 @@ class repository_movingimagepicker extends repository {
     // Initialize service with error handling
     try {
         $this->service = new VideoManagerPro();
-        error_log("movingimage: VideoManagerPro service initialized successfully");
     } catch (Exception $e) {
         // Log error but don't fail completely
-        error_log('movingimage: Failed to initialize VideoManagerPro: ' . $e->getMessage());
         $this->service = null;
     }
 	}
@@ -118,8 +115,22 @@ class repository_movingimagepicker extends repository {
   public static function get_type_option_names() {
     return array('pluginname','vmproid', 'login', 'password', 'playerid', 'sortby','sortasc','sso','idphint','client',
 		             'vmprologin','autocreateuser','usercompanyrole','adminrole','autocreategroup','autocreatechannel',
-					 'miuserfield','usergrouprole','rootchannel');
+					 'miuserfield','usergrouprole','rootchannel',
+					 'deletiondays','uploadrootchannel','securitypolicyid','coursefield','namefield','emailfield');
   }
+
+
+	// Static helper to read a picker connection option from a static context
+	// (e.g. config form). Prefers the current "repository_*" config name and
+	// falls back to the legacy name for backward compatibility.
+	protected static function get_picker_config(string $config): string {
+		$value = get_config('repository_movingimagepicker', $config);
+		if ($value !== false && $value !== '') {
+			return trim($value);
+		}
+		$value = get_config('movingimagepicker', $config);
+		return ($value !== false) ? trim($value) : '';
+	}
 
 
 	// create config form
@@ -128,13 +139,29 @@ class repository_movingimagepicker extends repository {
 
         // Create new movingimage API instance and try to log in
         $vmpro = new VideoManagerPro();
-        if ($vmpro->login(get_config('movingimagepicker', 'login'), get_config('movingimagepicker', 'password'), get_config('movingimagepicker', 'vmproid')) === true) {
+        if ($vmpro->login(self::get_picker_config('login'), self::get_picker_config('password'), self::get_picker_config('vmproid')) === true) {
 
             // Get available user roles from API and list them in an array
             $options_roles = ['0' => '** unused **'];
             $roles = $vmpro->getRoles();
             foreach ($roles as $key => $role)
                 $options_roles[$key] = $role['name'];
+
+            // Get available video security policies from API and list them in an array
+            $options_policies = ['0' => '** unused **'];
+            $policies = $vmpro->getSecurityPolicies();
+            if (is_array($policies)) {
+                foreach ($policies as $key => $policy)
+                    $options_policies[$key] = $policy['name'];
+            }
+
+            // Get available video custom metadata fields from API and list them in an array
+            $options_metadata = ['0' => '** unused **'];
+            $metadata = $vmpro->getCustomMetadataFields();
+            if (is_array($metadata)) {
+                foreach ($metadata as $meta)
+                    $options_metadata[$meta['keyName']] = $meta['keyName'];
+            }
 
             // Store that we have a valid API conection available, options can be provided as dropdowns
             $validVMPro = true;
@@ -172,7 +199,7 @@ class repository_movingimagepicker extends repository {
                     $options_players[$pid] = $name . ' (' . $pid . ')';
                 }
                 $mform->addElement('select', 'playerid', get_string('playerid', 'repository_movingimagepicker'), $options_players);
-                $mform->setDefault('playerid', get_config('movingimagepicker', 'playerid'));
+                $mform->setDefault('playerid', self::get_picker_config('playerid'));
             } else {
                 // Fallback to text if players cannot be retrieved
                 $mform->addElement('text', 'playerid', get_string('playerid', 'repository_movingimagepicker'));
@@ -282,6 +309,52 @@ class repository_movingimagepicker extends repository {
         $mform->disabledIf('adminrole','autocreategroup');
         $mform->disabledIf('adminrole','autocreateuser');
         $mform->disabledIf('adminrole','sso');
+
+        // --- Video upload settings (merged from the former movingimageupload repository) ---
+
+        // Provide video security policy either as dropdown or as numeric ID
+        if ($validVMPro) {
+            $mform->addElement('select', 'securitypolicyid', get_string('securitypolicyid', 'repository_movingimagepicker'), $options_policies);
+        } else {
+            $mform->addElement('text', 'securitypolicyid', get_string('securitypolicyid', 'repository_movingimagepicker'));
+            $mform->setType('securitypolicyid', PARAM_INT);
+            $mform->addRule('securitypolicyid', null, 'numeric', null, 'client');
+        }
+
+        // Provide checkbox for allowing video upload to the root channel
+        $mform->addElement('advcheckbox', 'uploadrootchannel', get_string('uploadrootchannel', 'repository_movingimagepicker'),'',[],array(0,1));
+        $mform->setType('uploadrootchannel', PARAM_INT);
+        $mform->setDefault('uploadrootchannel', 0);
+
+        // Provide numeric input for number of days before auto-deletion of uploaded videos (0 = no auto-deletion)
+        $mform->addElement('text', 'deletiondays', get_string('deletiondays', 'repository_movingimagepicker'));
+        $mform->setType('deletiondays', PARAM_INT);
+        $mform->addRule('deletiondays', null, 'numeric', null, 'client');
+        $mform->setDefault('deletiondays', 0);
+
+        // Provide video custom metadata field for Moodle course name either as dropdown or as text input
+        if ($validVMPro) {
+            $mform->addElement('select', 'coursefield', get_string('coursefield', 'repository_movingimagepicker'), $options_metadata);
+        } else {
+            $mform->addElement('text', 'coursefield', get_string('coursefield', 'repository_movingimagepicker'));
+            $mform->setType('coursefield', PARAM_RAW_TRIMMED);
+        }
+
+        // Provide video custom metadata field for the uploader name either as dropdown or as text input
+        if ($validVMPro) {
+            $mform->addElement('select', 'namefield', get_string('namefield', 'repository_movingimagepicker'), $options_metadata);
+        } else {
+            $mform->addElement('text', 'namefield', get_string('namefield', 'repository_movingimagepicker'));
+            $mform->setType('namefield', PARAM_RAW_TRIMMED);
+        }
+
+        // Provide video custom metadata field for the uploader email address either as dropdown or as text input
+        if ($validVMPro) {
+            $mform->addElement('select', 'emailfield', get_string('emailfield', 'repository_movingimagepicker'), $options_metadata);
+        } else {
+            $mform->addElement('text', 'emailfield', get_string('emailfield', 'repository_movingimagepicker'));
+            $mform->setType('emailfield', PARAM_RAW_TRIMMED);
+        }
   }
 
 
@@ -348,6 +421,28 @@ class repository_movingimagepicker extends repository {
 				$errors['adminrole'] = get_string('config_role_error', 'repository_movingimagepicker');
 		}
 
+		// Check if security policy ID is set to an invalid ID and output error message
+		if (!empty($data['securitypolicyid'])) {
+			$securitypolicies = $vmpro->getSecurityPolicies();
+			if (!is_array($securitypolicies) || !isset($securitypolicies[$data['securitypolicyid']]))
+				$errors['securitypolicyid'] = get_string('config_policy_error', 'repository_movingimagepicker');
+		}
+
+		// Check if any of the custom metadata fields is set to an invalid field name
+		$custommetadata = $vmpro->getCustomMetadataFields();
+		$check = ['coursefield' => false, 'namefield' => false, 'emailfield' => false];
+		foreach ($check as $k => $c) {
+			if (!empty($data[$k])) {
+				if (is_array($custommetadata)) {
+					foreach ($custommetadata as $m)
+						if ($data[$k] == $m['keyName'])
+							$check[$k] = true;
+				}
+				if (!$check[$k])
+					$errors[$k] = get_string('config_metadata_error', 'repository_movingimagepicker');
+			}
+		}
+
 		// Report errors
 		return $errors;
   }
@@ -383,8 +478,17 @@ class repository_movingimagepicker extends repository {
 
 		} else {
 
-			// Use conventional HTML output
-			echo html_writer::link($url, get_string('login', 'repository'), array('target' => '_blank'));
+			// Use conventional HTML output (fallback when AJAX file picker is unavailable)
+			$callback_url = new moodle_url('/repository/repository_callback.php');
+			$auth_url = new moodle_url('/repository/movingimagepicker/keycloak.html', [
+			              'callback'  => 'yes',
+			              'repo_id'   => $this->id,
+			              'sesskey'   => sesskey(),
+										'redirect'  => $callback_url->out(),
+										'client'    => $this->get_movingimage_option('client'),
+										'idp'       => $this->get_movingimage_option('idphint')
+			          ]);
+			echo html_writer::link($auth_url->out(false), get_string('login', 'repository'), array('target' => '_blank'));
 
 		}
 	}
@@ -441,43 +545,30 @@ class repository_movingimagepicker extends repository {
 	public function getMiAccessToken() {
 		global $SESSION;
 
-		error_log("movingimage: getMiAccessToken() called");
-
 		// If access token is already available
 		if (!empty($SESSION->miAccessToken)) {
 
-			error_log("movingimage: Existing access token found, testing validity");
 			// Try to log in with existing token
 			if ($this->service->tryAccessToken($this->get_movingimage_option('vmproid'),$SESSION->miAccessToken)) {
-				error_log("movingimage: Existing access token is valid");
 				// Login succeeded
 				return true;
-			} else {
-				error_log("movingimage: Existing access token is invalid");
 			}
 		}
 
 		// If SSO option is not set, log in with technical user credentials, store token and return
 		$sso_enabled = $this->get_movingimage_option('sso');
 		$sso_is_enabled = ($sso_enabled == '1' || $sso_enabled === 1);
-		
+
 		if (!$sso_is_enabled) {
-			error_log("movingimage: SSO disabled, attempting technical user login");
 			if ($this->service->login($this->get_movingimage_option('login'),
 															  $this->get_movingimage_option('password'),
 																$this->get_movingimage_option('vmproid'))) {
 				$SESSION->miAccessToken	= $this->service->getAccessToken();
-				error_log("movingimage: Technical user login successful, token stored");
 				return true;
-			} else {
-				error_log("movingimage: Technical user login failed");
 			}
-		} else {
-			error_log("movingimage: SSO enabled, user login required");
 		}
 
 		// No token available, SSO log in required
-		error_log("movingimage: No valid access token available");
 		return false;
 	}
 
@@ -494,7 +585,7 @@ class repository_movingimagepicker extends repository {
 		if (!$adminVMPro->login($this->get_movingimage_option('login'),
 				 						  			$this->get_movingimage_option('password'),
 														$this->get_movingimage_option('vmproid')))
-			throw new moodle_exception('apierror-login', 'repository_movingimageupload', get_string('admin_login_error', 'repository_movingimageupload'), '');
+			throw new moodle_exception('apierror-login', 'repository_movingimagepicker', get_string('admin_login_error', 'repository_movingimagepicker'), '');
 
 		// Try to find user
 		$userID = $adminVMPro->getUserIDByEmail($userEmail);
@@ -551,18 +642,14 @@ class repository_movingimagepicker extends repository {
 		// If SSO is enabled, make sure user, group and channel exist before trying to log in
 		$sso_enabled = $this->get_movingimage_option('sso');
 		$sso_is_enabled = ($sso_enabled == '1' || $sso_enabled === 1);
-		error_log("movingimage: SSO setting value: '$sso_enabled', interpreted as: " . ($sso_is_enabled ? 'enabled' : 'disabled'));
 		
 		if ($sso_is_enabled){
-			error_log("movingimage: SSO is enabled, checking user setup");
 			$miuserfield = $this->get_movingimage_option('miuserfield');
 			require_once($CFG->dirroot.'/user/profile/lib.php');
 			profile_load_data($USER);
 			if (isset($USER->$miuserfield)) {
 				$this->checkUserIDandCreateIfNeeded($USER->$miuserfield);
 			}
-		} else {
-			error_log("movingimage: SSO is disabled, will use technical user authentication");
 		}
 		// If we do not have or get a valid access token
 		if (!$this->getMiAccessToken()) {
@@ -570,15 +657,17 @@ class repository_movingimagepicker extends repository {
 			// Require login if SSO is used or throw error message if technical user cannot log in
 			$sso_enabled = $this->get_movingimage_option('sso');
 			$sso_is_enabled = ($sso_enabled == '1' || $sso_enabled === 1);
-			error_log("movingimage: Authentication failed, SSO enabled: " . ($sso_is_enabled ? 'yes' : 'no'));
 			
 			if ($sso_is_enabled) {
-				error_log("movingimage: Showing SSO login form");
 				return $this->print_login();
 			} else {
-				error_log("movingimage: Technical user authentication failed");
 				throw new moodle_exception('apierror-login', 'repository_movingimagepicker', get_string('admin_login_error', 'repository_movingimagepicker'), '');
 			}
+		}
+
+		// Special virtual path: show the video upload form instead of a channel listing.
+		if ($path === 'upload') {
+			return $this->get_upload_listing();
 		}
 
 		// Extract single path components
@@ -615,11 +704,24 @@ class repository_movingimagepicker extends repository {
 
 			// Create an array that contains all video subchannels
 			$folders = array();
+
+			// Virtual folder shown only at the root level: entry point to upload a new video.
+			if ($path === '') {
+				$folders[] = [
+							'title'             => get_string('upload_folder', 'repository_movingimagepicker'),
+							'path'              => 'upload',
+							'thumbnail'         => $OUTPUT->image_url('i/upload')->out(false),
+							'thumbnail_width'   => 160,
+							'thumbnail_height'  => 90,
+							'children'          => array()
+						];
+			}
+
 			foreach ($subchannels['children'] as $channel) {
 				$folders[] = [
 							'title'             => $channel['name'],
 							'path'				=> $path.'/'.$channel['id'],
-							'thumbnail'         => $OUTPUT->pix_url(file_folder_icon(90))->out(false),
+							'thumbnail'         => $OUTPUT->image_url(file_folder_icon(90))->out(false),
 							'thumbnail_width'   => 160,
 							'thumbnail_height'  => 90,
 							'thumbnail_title'   => 'abcdefg',
@@ -647,9 +749,44 @@ class repository_movingimagepicker extends repository {
   }
 
 
+  // Build the listing that embeds the video upload form (virtual "upload" path).
+  private function get_upload_listing() {
+		global $SESSION;
+
+		// Resolve the numeric context ID for the upload form frame.
+		$contextid = $this->context;
+		if (is_object($contextid)) {
+			$contextid = $contextid->id;
+		}
+
+		// Build the URL for the embedded upload form.
+		$url = new moodle_url('/repository/movingimagepicker/uploadform.php',
+							  array('type' => 'init',
+									'repositoryid' => $this->id,
+									'contextid' => $contextid,
+									'sesskey' => sesskey(),
+									'mitoken' => $SESSION->miAccessToken));
+
+		// Hand over the upload form frame to the file picker.
+		$list = array();
+		$list['object']         = array();
+		$list['object']['type'] = 'text/html';
+		$list['object']['src']  = $url->out(false);
+		$list['nosearch']       = true;
+		$list['norefresh']      = true;
+		$list['manage']         = $this->get_movingimage_option('vmprologin');
+		$list['nologin']        = true;
+		$list['dynload']        = true;
+		$list['path']           = array(
+			array('name' => 'movingimage', 'path' => ''),
+			array('name' => get_string('upload_folder', 'repository_movingimagepicker'), 'path' => 'upload')
+		);
+		return $list;
+  }
+
+
   // Search for a video via fulltext search
-  public function search($searchtext, $page = 0) {
-		global $OUTPUT;
+  public function search($searchtext, $page = 0) {		global $OUTPUT;
 		global $SESSION;
 
 		// If we do not have or get a valid access token
@@ -712,7 +849,6 @@ class repository_movingimagepicker extends repository {
   private function _get_collection($channelid, $page = '', $search = '', $folders = 0) {
 		global $SESSION;
 
-		error_log("movingimage: _get_collection called with channelid=$channelid, page=$page, search='$search'");
 
 		// Create return array and set correct page no.
     $ret = array();
@@ -729,7 +865,6 @@ class repository_movingimagepicker extends repository {
 		// Check if access token is available
     if (!empty($SESSION->miAccessToken)) {
 			
-			error_log("movingimage: Access token found, getting videos for channel $channelid");
 
 			// Get video list from movingimage API
 			$videos = $this->service->getVideos($channelid, $max, $ofs, $search, $this->get_movingimage_option('sortby'), false);
@@ -739,13 +874,9 @@ class repository_movingimagepicker extends repository {
 
 				// Get root channel setting - if empty or 0, use 0 as default
 				$rootchannel = intval($this->get_movingimage_option('rootchannel'));
-				
-				// Get upload root channel setting from upload repository for cross-repository compatibility
-				$uploadrootchannel = get_config('repository_movingimageupload', 'uploadrootchannel');
-				if ($uploadrootchannel === false) {
-					$uploadrootchannel = get_config('movingimageupload', 'uploadrootchannel');
-				}
-				$uploadrootchannel = intval($uploadrootchannel);
+
+				// Get upload root channel setting (uploads to the root channel may be disallowed)
+				$uploadrootchannel = intval($this->get_movingimage_option('uploadrootchannel'));
 
 				// Display videos if:
 				// 1. We're not in the root channel (channelid != rootchannel)
@@ -754,7 +885,6 @@ class repository_movingimagepicker extends repository {
 				// 4. OR root channel is 0 (show all videos by default)
 				if ($channelid != $rootchannel || $uploadrootchannel == 1 || $search != '' || $rootchannel == 0) {
 
-					error_log("movingimage: Displaying videos - channelid=$channelid, rootchannel=$rootchannel, uploadrootchannel=$uploadrootchannel, search='$search'");
 
 					// Create an array that contains all videos
 					foreach ($videos['videos'] as $video) {
@@ -779,13 +909,10 @@ class repository_movingimagepicker extends repository {
 
 					// Calculate number of remaining pages for further videos
 					$ret['pages'] = (int) floor($videos['total'] / $max) + ($videos['total'] % $max > 0 ? 1 : 0);
-				} else {
-					error_log("movingimage: Videos NOT displayed due to channel restrictions - channelid=$channelid, rootchannel=$rootchannel, uploadrootchannel=$uploadrootchannel, search='$search'");
 				}
 			} else {
 
 				// movingimage returned empty video list or error, but don't throw exception - just return empty list
-				error_log("movingimage: Video list is empty or invalid");
 				$ret['list'] = [];
 				return $ret;
 
@@ -793,16 +920,12 @@ class repository_movingimagepicker extends repository {
     } else {
 
 			// No access token available, throw error and return
-			error_log("movingimage: No access token in session, authentication required");
 			throw new moodle_exception('apierror-login', 'repository_movingimagepicker', get_string('admin_login_error', 'repository_movingimagepicker'), '');
-			$ret['list'] = [];
-      return $ret;
 
     }
 
     // return video list
 		$ret['list'] = $results;
-		error_log("movingimage: _get_collection returning " . count($results) . " videos");
     return $ret;
   }
 

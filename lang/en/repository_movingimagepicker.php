@@ -55,3 +55,27 @@ $string['config_client_error'] = 'Client name must be defined when SSO is activa
 $string['config_miuserfield_error'] = 'User property doesn´t exist';
 $string['config_role_error'] = 'Invalid role ID for movingimage EVP';
 $string['videolist_error'] = 'Could not get video list from movingimage EVP';
+
+// Video upload (merged from the former movingimageupload repository).
+$string['upload_folder'] = 'Upload new video';
+$string['uploadrootchannel'] = 'Allow uploads also to root channel for Moodle videos';
+$string['securitypolicyid'] = 'movingimage Security Policy ID for protected videos';
+$string['deletiondays'] = 'Auto-delete videos after days';
+$string['coursefield'] = 'Course metadata field name in movingimage EVP';
+$string['namefield'] = 'Uploader metadata field name in movingimage EVP';
+$string['emailfield'] = 'Email metadata field name in movingimage EVP';
+$string['config_policy_error'] = 'Invalid security policy ID for protected videos';
+$string['config_metadata_error'] = 'Invalid custom metadata field name';
+$string['upload_request_error'] = 'Upload request error';
+$string['upload_error'] = 'Upload error';
+$string['upload_success'] = 'Upload success';
+$string['upload_cancelled'] = 'Upload cancelled';
+$string['upload_filesize'] = 'File size';
+$string['upload_start_button'] = 'Upload file to movingimage';
+$string['upload_cancel_button'] = 'Cancel file upload';
+$string['upload_more_button'] = 'Upload more files...';
+$string['upload_title_input'] = 'Enter video title';
+$string['upload_protected_input'] = 'Protected';
+$string['upload_description_input'] = 'Enter video description';
+$string['upload_keywords_input'] = 'Enter keywords (comma separated)';
+$string['upload_channel_input'] = 'Choose channel to upload to';

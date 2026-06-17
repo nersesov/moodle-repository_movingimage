@@ -55,3 +55,27 @@ $string['config_client_error'] = 'Client-Name muss definiert sein wenn SSO aktiv
 $string['config_miuserfield_error'] = 'Benutzereigenschaft existiert nicht';
 $string['config_role_error'] = 'Ungültige Rollen-ID für movingimage EVP';
 $string['videolist_error'] = 'Videoliste der movingimage EVP nicht abrufbar';
+
+// Video-Upload (zusammengeführt aus dem ehemaligen movingimageupload-Repository).
+$string['upload_folder'] = 'Neues Video hochladen';
+$string['uploadrootchannel'] = 'Erlaube Uploads im Root-Channel für Moodle-Videos';
+$string['securitypolicyid'] = 'movingimage Sicherheitsrichtlinien-ID für geschützte Videos';
+$string['deletiondays'] = 'Automatischen Löschen der Videos nach wieviel Tagen';
+$string['coursefield'] = 'Metadatenfeld für Moodle-Kurs in movingimage EVP';
+$string['namefield'] = 'Metadatenfeld für Name des Uploaders in movingimage EVP';
+$string['emailfield'] = 'Metadatenfeld für Email des Uploaders in movingimage EVP';
+$string['config_policy_error'] = 'Ungültige Sicherheitsrichtlinien-ID für geschützte Videos';
+$string['config_metadata_error'] = 'Ungültiger Custom-Metadaten-Feldname';
+$string['upload_request_error'] = 'Upload-Request-Fehler';
+$string['upload_error'] = 'Upload-Fehler';
+$string['upload_success'] = 'Upload erfolgreich';
+$string['upload_cancelled'] = 'Upload abgebrochen';
+$string['upload_filesize'] = 'Dateigröße';
+$string['upload_start_button'] = 'Upload zu movingimage EVP starten';
+$string['upload_cancel_button'] = 'Upload abbrechen';
+$string['upload_more_button'] = 'Weitere Videos hochladen...';
+$string['upload_title_input'] = 'Video-Titel';
+$string['upload_protected_input'] = 'Geschützt';
+$string['upload_description_input'] = 'Video-Beschreibung';
+$string['upload_keywords_input'] = 'Video-Keywords (kommagetrennt)';
+$string['upload_channel_input'] = 'Upload-Channel auswählen';
