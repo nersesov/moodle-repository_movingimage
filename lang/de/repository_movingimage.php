@@ -22,10 +22,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['configplugin'] = 'Konfiguration für movingimage Video-Picker Repository';
-$string['movingimage:view'] = 'View movingimage Video-Picker Repository';
-$string['pluginname_help'] = 'Pick movingimage Videos';
-$string['pluginname'] = 'movingimage Video-Picker';
+$string['configplugin'] = 'Konfiguration für movingimage Video-Repository';
+$string['movingimage:view'] = 'movingimage Video-Repository anzeigen';
+$string['pluginname_help'] = 'movingimage-Videos durchsuchen, einfügen und hochladen';
+$string['pluginname'] = 'movingimage Video-Repository';
 $string['search'] = 'Suche';
 
 $string['vmproid'] = 'VMPro-ID Ihres movingimage-Accounts ';

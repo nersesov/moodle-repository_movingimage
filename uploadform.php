@@ -24,8 +24,9 @@
 // include all required Moodle and movingimage libs
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once($CFG->libdir.'/adminlib.php');
-if (!class_exists('VideoManagerPro'))
-	require_once($CFG->dirroot . '/repository/movingimage/classes/vmpro.php');
+
+use repository_movingimage\local\config;
+use repository_movingimage\local\vmpro_client;
 
 require_login();
 require_sesskey();
@@ -37,15 +38,9 @@ $PAGE->set_pagelayout('embedded');
 
 
 // Helper function to read a repository option, preferring the current
-// "repository_*" config name and falling back to the legacy name.
+// config area and falling back to the legacy name.
 function get_movingimage_option($config = '') {
-    $value = get_config('repository_movingimage', $config);
-    if ($value !== false && $value !== '') {
-        return trim($value);
-    }
-
-    $value = get_config('movingimage', $config);
-    return ($value !== false) ? trim($value) : '';
+    return \repository_movingimage\local\config::get($config);
 }
 ?>
 
@@ -100,7 +95,7 @@ function get_movingimage_option($config = '') {
                         <?php
 
                           // Create movimgimage API access instance and try to log in
-                          $vmpro = new VideoManagerPro();
+                          $vmpro = new vmpro_client();
                             if (!$vmpro->tryAccessToken(get_movingimage_option('vmproid'),optional_param('mitoken','',PARAM_RAW)))
                               throw new moodle_exception('apierror-login', 'repository_movingimage', get_string('admin_login_error', 'repository_movingimage'), '');
 

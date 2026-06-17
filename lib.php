@@ -27,8 +27,9 @@
 // include all required Moodle and movingimage libs
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/repository/lib.php');
-if (!class_exists('VideoManagerPro'))
-	require_once($CFG->dirroot . '/repository/movingimage/classes/vmpro.php');
+
+use repository_movingimage\local\config;
+use repository_movingimage\local\vmpro_client;
 
 
 class repository_movingimage extends repository {
@@ -53,7 +54,7 @@ class repository_movingimage extends repository {
     
     // Initialize service with error handling
     try {
-        $this->service = new VideoManagerPro();
+        $this->service = new vmpro_client();
     } catch (Exception $e) {
         // Log error but don't fail completely
         $this->service = null;
@@ -66,23 +67,17 @@ class repository_movingimage extends repository {
 			return trim($this->options[$config]);
 		}
 		
-		// Fallback to global repository type configuration
-		$value = get_config('repository_movingimage', $config);
-		if ($value !== false && !empty($value)) {
-			return trim($value);
+		// Fallback to global repository type configuration (current and legacy areas).
+		$value = config::get($config);
+		if ($value !== '') {
+			return $value;
 		}
-		
-		// Last fallback to old config name for backward compatibility
-		$value = get_config('movingimage', $config);
-		if ($value !== false && !empty($value)) {
-			return trim($value);
-		}
-		
+
 		// Special handling for SSO setting - default to disabled (0) if not set
 		if ($config === 'sso') {
 			return '0';
 		}
-		
+
 		return '';
   }
 
@@ -121,15 +116,10 @@ class repository_movingimage extends repository {
 
 
 	// Static helper to read a picker connection option from a static context
-	// (e.g. config form). Prefers the current "repository_*" config name and
-	// falls back to the legacy name for backward compatibility.
+	// (e.g. config form). Prefers the current config area and falls back to the
+	// legacy name for backward compatibility.
 	protected static function get_picker_config(string $config): string {
-		$value = get_config('repository_movingimage', $config);
-		if ($value !== false && $value !== '') {
-			return trim($value);
-		}
-		$value = get_config('movingimage', $config);
-		return ($value !== false) ? trim($value) : '';
+		return config::get($config);
 	}
 
 
@@ -138,7 +128,7 @@ class repository_movingimage extends repository {
     parent::type_config_form($mform);
 
         // Create new movingimage API instance and try to log in
-        $vmpro = new VideoManagerPro();
+        $vmpro = new vmpro_client();
         if ($vmpro->login(self::get_picker_config('login'), self::get_picker_config('password'), self::get_picker_config('vmproid')) === true) {
 
             // Get available user roles from API and list them in an array
@@ -360,9 +350,10 @@ class repository_movingimage extends repository {
 
 	// Validate inputs in config form
 	public static function type_form_validation($mform, $data, $errors) {
+		global $DB;
 
 		// Create new movingimage API instance and try to log in
-		$vmpro = new VideoManagerPro();
+		$vmpro = new vmpro_client();
 		if (!$vmpro->login($data['login'], $data['password'], $data['vmproid'])) {
 
 			// Output login error
@@ -394,15 +385,20 @@ class repository_movingimage extends repository {
 				$errors['client'] = get_string('config_client_error', 'repository_movingimage');
 		}
 		
-		// Get array of user fields in moodle
-		// $userfields = get_user_fieldnames();
-
-		// Check if user property to be used for User account creation, group and channel actually exists
-		// if ($data['autocreateuser'] == 1) {
-		// 	if (!array_keys($userfields,$data['miuserfield'])){
-		// 		$errors['miuserfield'] = get_string('config_miuserfield_error', 'repository_movingimage');
-		// 	}
-		// }
+		// Check that the user property selected for movingimage user creation actually exists.
+		// It may be either a standard user field or a custom profile field ("profile_field_<shortname>").
+		if ($data['autocreateuser'] == 1 && !empty($data['miuserfield'])) {
+			$validfields = get_user_fieldnames();
+			if (strpos($data['miuserfield'], 'profile_field_') === 0) {
+				$shortname = substr($data['miuserfield'], strlen('profile_field_'));
+				$exists = $DB->record_exists('user_info_field', ['shortname' => $shortname]);
+			} else {
+				$exists = in_array($data['miuserfield'], $validfields, true);
+			}
+			if (!$exists) {
+				$errors['miuserfield'] = get_string('config_miuserfield_error', 'repository_movingimage');
+			}
+		}
 
 		// Get list of available user roles in movingmage EVP
 		$roles = $vmpro->getRoles();
@@ -581,7 +577,7 @@ class repository_movingimage extends repository {
 		$userID = $groupID = 0;
 
 		// Create movingimage EVP instance for admin access and try to log in
-		$adminVMPro = new VideoManagerPro();
+		$adminVMPro = new vmpro_client();
 		if (!$adminVMPro->login($this->get_movingimage_option('login'),
 				 						  			$this->get_movingimage_option('password'),
 														$this->get_movingimage_option('vmproid')))
@@ -636,7 +632,7 @@ class repository_movingimage extends repository {
 
 		// Check if service is properly initialized
 		if ($this->service === null) {
-			throw new moodle_exception('apierror-service', 'repository_movingimage', 'VideoManagerPro service not initialized');
+			throw new moodle_exception('apierror-service', 'repository_movingimage', '', 'movingimage API client not initialized');
 		}
 
 		// If SSO is enabled, make sure user, group and channel exist before trying to log in
@@ -867,7 +863,7 @@ class repository_movingimage extends repository {
 			
 
 			// Get video list from movingimage API
-			$videos = $this->service->getVideos($channelid, $max, $ofs, $search, $this->get_movingimage_option('sortby'), false);
+			$videos = $this->service->getVideos($channelid, $max, $ofs, $search, $this->get_movingimage_option('sortby'), false, '', ($this->get_movingimage_option('sortasc') == 1));
 
 			// Check if video list is not empty and valid
 			if (is_array($videos) && isset ($videos['videos'])) {

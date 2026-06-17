@@ -23,7 +23,9 @@
  */
 
 require_once('../../config.php');
-require_once($CFG->dirroot . '/repository/movingimage/classes/vmpro.php');
+
+use repository_movingimage\local\config;
+use repository_movingimage\local\vmpro_client;
 
 // Must be run by an admin
 require_login();
@@ -39,26 +41,10 @@ echo $OUTPUT->header();
 
 echo html_writer::tag('h2', 'movingimage Connection Diagnostic');
 
-/**
- * Read a picker connection option, preferring the current "repository_*" config
- * name and falling back to the legacy name for backward compatibility.
- *
- * @param string $config Configuration key.
- * @return string Configuration value, empty string if not set.
- */
-function movingimage_get_picker_option(string $config): string {
-    $value = get_config('repository_movingimage', $config);
-    if ($value !== false && $value !== '') {
-        return trim($value);
-    }
-    $value = get_config('movingimage', $config);
-    return ($value !== false) ? trim($value) : '';
-}
-
 // Get configuration
-$login = movingimage_get_picker_option('login');
-$password = movingimage_get_picker_option('password');
-$vmproid = movingimage_get_picker_option('vmproid');
+$login = config::get('login');
+$password = config::get('password');
+$vmproid = config::get('vmproid');
 
 echo html_writer::tag('h3', 'Configuration Check');
 echo html_writer::start_tag('ul');
@@ -111,7 +97,7 @@ if ($ip !== $api_host) {
 // Test 4: Basic connectivity
 echo html_writer::tag('h4', '4. Basic API Connectivity');
 try {
-    $vmpro = new VideoManagerPro();
+    $vmpro = new vmpro_client();
     if ($vmpro->testConnection()) {
         echo html_writer::tag('p', '✓ Basic API connectivity successful', array('style' => 'color: green;'));
     } else {
@@ -124,7 +110,7 @@ try {
 // Test 5: Authentication
 echo html_writer::tag('h4', '5. Authentication Test');
 try {
-    $vmpro = new VideoManagerPro();
+    $vmpro = new vmpro_client();
     if ($vmpro->login($login, $password, $vmproid)) {
         echo html_writer::tag('p', '✓ Authentication successful', array('style' => 'color: green;'));
         
@@ -140,7 +126,7 @@ try {
         
         // Test 7: Channel access
         echo html_writer::tag('h4', '7. Channel Access Test');
-        $rootchannel = movingimage_get_picker_option('rootchannel');
+        $rootchannel = config::get('rootchannel');
         $channels = $vmpro->getChannels($rootchannel);
         if ($channels !== false && is_array($channels)) {
             echo html_writer::tag('p', '✓ Channel access successful', array('style' => 'color: green;'));

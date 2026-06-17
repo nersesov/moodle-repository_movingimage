@@ -26,29 +26,13 @@
 define('AJAX_SCRIPT', true);
 
 require_once(__DIR__ . '/../../config.php');
-if (!class_exists('VideoManagerPro')) {
-    require_once($CFG->dirroot . '/repository/movingimage/classes/vmpro.php');
-}
+
+use repository_movingimage\local\config;
+use repository_movingimage\local\vmpro_client;
 
 // Access control: an authenticated user with a valid session is required.
 require_login();
 require_sesskey();
-
-/**
- * Read a repository option, preferring the current "repository_*" config name
- * and falling back to the legacy name for backward compatibility.
- *
- * @param string $config Configuration key.
- * @return string Configuration value, empty string if not set.
- */
-function movingimage_get_option(string $config): string {
-    $value = get_config('repository_movingimage', $config);
-    if ($value !== false && $value !== '') {
-        return trim($value);
-    }
-    $value = get_config('movingimage', $config);
-    return ($value !== false) ? trim($value) : '';
-}
 
 /**
  * Send a plain-text error response and stop execution.
@@ -72,8 +56,8 @@ $channel = optional_param('channel', 0, PARAM_INT);
 $coursename = optional_param('coursename', '', PARAM_TEXT);
 
 // Security-relevant values are derived server-side and never trusted from the client.
-$vmproid = movingimage_get_option('vmproid');
-$ssoenabled = (movingimage_get_option('sso') === '1');
+$vmproid = config::get('vmproid');
+$ssoenabled = (config::get('sso') === '1');
 
 // The access token is held in the session; fall back to the posted token if absent.
 $mitoken = (!empty($SESSION->miAccessToken))
@@ -89,7 +73,7 @@ $author = fullname($USER);
 $email = $USER->email;
 
 // Create new instance and validate the access token against the API.
-$vmpro = new VideoManagerPro();
+$vmpro = new vmpro_client();
 if (!$vmpro->tryAccessToken($vmproid, $mitoken)) {
     movingimage_fail(401, get_string('admin_login_error', 'repository_movingimage'));
 }
@@ -118,9 +102,9 @@ http_response_code(200);
 echo $url['upload_url'];
 
 // Persist Moodle metadata into the custom metadata fields configured by the admin.
-$coursefield = movingimage_get_option('coursefield');
-$namefield = movingimage_get_option('namefield');
-$emailfield = movingimage_get_option('emailfield');
+$coursefield = config::get('coursefield');
+$namefield = config::get('namefield');
+$emailfield = config::get('emailfield');
 
 $metadata = [];
 if ($coursefield !== '') {
@@ -137,7 +121,7 @@ if (count($metadata) > 0) {
 }
 
 // Apply the configured auto-deletion retention period, if any.
-$deletiondays = (int) movingimage_get_option('deletiondays');
+$deletiondays = (int) config::get('deletiondays');
 if ($deletiondays > 0) {
     $deletiontimestamp = (time() + $deletiondays * DAYSECS) * 1000;
     $vmpro->setVideoDeletionTimer($entity['id'], $deletiontimestamp);
@@ -145,7 +129,7 @@ if ($deletiondays > 0) {
 
 // Apply the configured security policy when the uploader requested protection.
 $protected = optional_param('protected', 0, PARAM_BOOL);
-$securitypolicyid = (int) movingimage_get_option('securitypolicyid');
+$securitypolicyid = (int) config::get('securitypolicyid');
 if ($protected && $securitypolicyid > 0) {
     $vmpro->setVideoData($entity['id'], ['securityPolicyId' => $securitypolicyid]);
 }

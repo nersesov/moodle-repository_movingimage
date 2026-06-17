@@ -41,10 +41,10 @@ $string['idphint'] = 'SSO IDP hint for movingimage Auth Service';
 $string['sortby'] = 'Sort video list by "title", "createdDate", "modifiedDate", "views" or "plays"';
 $string['sortasc'] = 'Sort video list ascending';
 
-$string['configplugin'] = 'Configuration for movingimage video picker repository';
+$string['configplugin'] = 'Configuration for movingimage video repository';
 $string['movingimage:view'] = 'View movingimage repository';
-$string['pluginname_help'] = 'Pick movingimage Videos';
-$string['pluginname'] = 'movingimage video picker';
+$string['pluginname_help'] = 'Browse, insert and upload movingimage videos';
+$string['pluginname'] = 'movingimage video repository';
 $string['search'] = 'Search';
 
 $string['admin_login_error'] = 'movingimage EVP login unsuccessful - check Login/Password & VMPro ID';
