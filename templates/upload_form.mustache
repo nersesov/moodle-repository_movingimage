@@ -40,7 +40,7 @@
                 <div class="row">
                     <div class="col-xs-6" id="choosebutton">
                         <label class="btn btn-primary btn-file">
-                            {{#str}}upload_choose_button, repository_movingimage{{/str}}<input type="file" style="display: none;" onchange="fileChange();" id="fileA">
+                            {{#str}}upload_choose_button, repository_movingimage{{/str}}<input type="file" style="display: none;" id="fileA">
                         </label>
                     </div>
                     <div class="col-xs-6">
@@ -83,12 +83,12 @@
     <div id="outtext"></div>
 
     <div class="mdl-align" id="uploadbutton" style="display: none;">
-        <button class="btn-success btn" onclick="startUpload();">{{#str}}upload_start_button, repository_movingimage{{/str}}</button>
+        <button class="btn-success btn">{{#str}}upload_start_button, repository_movingimage{{/str}}</button>
     </div>
     <div class="mdl-align" id="cancelbutton" style="display: none;">
-        <button class="btn-danger btn" onclick="abortUpload();">{{#str}}upload_cancel_button, repository_movingimage{{/str}}</button>
+        <button class="btn-danger btn">{{#str}}upload_cancel_button, repository_movingimage{{/str}}</button>
     </div>
     <div class="mdl-align" id="redobutton" style="display: none;">
-        <button class="btn-primary btn" onclick="resetForm();">{{#str}}upload_more_button, repository_movingimage{{/str}}</button>
+        <button class="btn-primary btn">{{#str}}upload_more_button, repository_movingimage{{/str}}</button>
     </div>
 </div>
