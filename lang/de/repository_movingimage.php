@@ -27,8 +27,11 @@ $string['movingimage:view'] = 'movingimage Video-Repository anzeigen';
 $string['pluginname_help'] = 'movingimage-Videos durchsuchen, einfügen und hochladen';
 $string['pluginname'] = 'movingimage Video-Repository';
 $string['search'] = 'Suche';
+$string['chooseplayer'] = 'Player';
+$string['defaultplayer'] = 'Standard-Player';
 
 $string['vmproid'] = 'VMPro-ID Ihres movingimage-Accounts ';
+$string['playerid_help'] = 'Der Standard-Player zum Einbetten eingefügter Videos. Dieser kann pro Einfügung überschrieben werden: Dateiauswahl öffnen, auf "Suche" klicken und im Auswahlmenü "Player" einen anderen Player wählen.';
 $string['playerid'] = 'Player-ID für Videoeinbettung';
 $string['rootchannel'] = 'Root-Channel-ID für Moodle-Videos im movingimage EVP-Account';
 $string['login'] = 'Admin-Username in movingimage EVP';

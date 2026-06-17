@@ -24,6 +24,7 @@
 
 $string['vmproid'] = 'VMPro ID of movingimage account ';
 $string['playerid'] = 'Player ID for video embedding';
+$string['playerid_help'] = 'The default player used to embed inserted videos. This can be overridden per insert: open the file picker, click "Search" and choose a different player from the "Player" drop-down.';
 $string['rootchannel'] = 'Root channel ID for Moodle videos in movingimage EVP';
 $string['login'] = 'Admin username to movingimage EVP';
 $string['password'] = 'Admin password for authorized access';
@@ -46,6 +47,8 @@ $string['movingimage:view'] = 'View movingimage repository';
 $string['pluginname_help'] = 'Browse, insert and upload movingimage videos';
 $string['pluginname'] = 'movingimage video repository';
 $string['search'] = 'Search';
+$string['chooseplayer'] = 'Player';
+$string['defaultplayer'] = 'Default player';
 
 $string['admin_login_error'] = 'movingimage EVP login unsuccessful - check Login/Password & VMPro ID';
 $string['config_player_error'] = 'Invalid player ID for movingimage account';

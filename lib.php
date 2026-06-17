@@ -202,6 +202,9 @@ class repository_movingimage extends repository {
             $mform->addRule('playerid', null, 'required', null, 'client');
         }
 
+        // Note that this default player can be overridden per insert via the picker search form.
+        $mform->addHelpButton('playerid', 'playerid', 'repository_movingimage');
+
         // Provide numeric input for video root channel ID
         $mform->addElement('text', 'rootchannel', get_string('rootchannel', 'repository_movingimage'));
         $mform->setType('rootchannel', PARAM_INT);
@@ -781,9 +784,111 @@ class repository_movingimage extends repository {
   }
 
 
+  // Custom search form: standard fulltext box plus an optional player selector.
+  // The selected player is applied to the embed URL of inserted videos.
+  public function print_search() {
+		global $SESSION;
+
+		// Standard hidden fields expected by the file picker search form.
+		$str  = '<input type="hidden" name="repo_id" value="' . s($this->id) . '" />';
+		$str .= '<input type="hidden" name="ctx_id" value="' . s($this->context->id) . '" />';
+		$str .= '<input type="hidden" name="seekey" value="' . sesskey() . '" />';
+
+		// Fulltext search field (the name "s" is read by repository_ajax.php).
+		$str .= '<label>' . get_string('search', 'repository_movingimage') . '</label><br />';
+		$str .= '<input type="text" name="s" value="" /><br />';
+
+		// Marker so search() can tell a real form submit (incl. "Default" choice)
+		// apart from result paging, where the player field is not resubmitted.
+		$str .= '<input type="hidden" name="movingimage_searchform" value="1" />';
+
+		// Optional player selector - only rendered when the API can provide players.
+		$players = array();
+		if ($this->getMiAccessToken()) {
+			$players = $this->service->getPlayers();
+		}
+
+		if (is_array($players) && !empty($players)) {
+			$selected = isset($SESSION->{'movingimage_player_' . $this->id})
+				? (string)$SESSION->{'movingimage_player_' . $this->id}
+				: '';
+
+			$str .= '<label>' . get_string('chooseplayer', 'repository_movingimage') . '</label><br />';
+			$str .= '<select name="movingimage_player">';
+			// Empty value falls back to the globally configured default player.
+			$str .= '<option value=""' . ($selected === '' ? ' selected="selected"' : '') . '>'
+				. get_string('defaultplayer', 'repository_movingimage') . '</option>';
+			foreach ($players as $pid => $pdata) {
+				$name = isset($pdata['name']) ? $pdata['name'] : (string)$pid;
+				$isselected = ($selected === (string)$pid) ? ' selected="selected"' : '';
+				$str .= '<option value="' . s($pid) . '"' . $isselected . '>'
+					. s($name . ' (' . $pid . ')') . '</option>';
+			}
+			$str .= '</select><br />';
+		}
+
+		return $str;
+  }
+
+
+	// Helper function: resolve the player ID for the embed URL.
+	//                  A per-session selection (search form) wins over the global default.
+	private function get_effective_playerid() {
+		global $SESSION;
+
+		$key = 'movingimage_player_' . $this->id;
+		if (!empty($SESSION->{$key})) {
+			return $SESSION->{$key};
+		}
+
+		return $this->get_movingimage_option('playerid');
+	}
+
+
+	// Helper function: pick a higher-resolution still image for the file picker
+	//                  preview. Falls back to the default thumbnail when no suitable
+	//                  still is available. The returned URL is already tokenised by the API.
+	private function pick_preview_still(array $video) {
+		// No stills array - use the default thumbnail as-is.
+		if (empty($video['stills']) || !is_array($video['stills'])) {
+			return $video['thumbnail'] ?? '';
+		}
+
+		// Map available stills by their quality label.
+		$byquality = array();
+		foreach ($video['stills'] as $still) {
+			if (isset($still['quality'], $still['url'])) {
+				$byquality[$still['quality']] = $still['url'];
+			}
+		}
+
+		// Preference order: a good balance of clarity vs. download size.
+		$preferred = array('720p', '480p', '360p', '1080p', 'thumbnail');
+		foreach ($preferred as $quality) {
+			if (isset($byquality[$quality])) {
+				return $byquality[$quality];
+			}
+		}
+
+		return $video['thumbnail'] ?? '';
+	}
+
+
   // Search for a video via fulltext search
   public function search($searchtext, $page = 0) {		global $OUTPUT;
 		global $SESSION;
+
+		// Persist optional per-insert player selection from the search form.
+		// On a real form submit an empty value means "Default player" and clears
+		// the override; during result paging the field is absent, so we keep it.
+		if (optional_param('movingimage_searchform', 0, PARAM_INT) === 1) {
+			$player = optional_param('movingimage_player', '', PARAM_RAW_TRIMMED);
+			if ($player !== '') {
+				$SESSION->{'movingimage_player_' . $this->id} = $player;
+			} else {
+				unset($SESSION->{'movingimage_player_' . $this->id});
+			}
+		}
 
 		// If we do not have or get a valid access token
 		if (!$this->getMiAccessToken()) {
@@ -888,14 +993,17 @@ class repository_movingimage extends repository {
 						$results[] = array(
 								'title' => pathinfo($video['title'], PATHINFO_FILENAME).'.wmv',
 								'thumbnail' => $video['thumbnail'],
-								'thumbnail_width' => 160,
-								'thumbnail_height' => 90,
+								'thumbnail_width' => 240,
+								'thumbnail_height' => 135,
+								// Higher-resolution still shown enlarged on hover and in the
+								// selection dialog (the file picker uses it as the "real" preview).
+								'realthumbnail' => $this->pick_preview_still($video),
 								'thumbnail_title'   => 'abcdefg',
 								'size' => $video['length'] * 400,
 								'date' => $video['createdDate'] / 1000,
 								'datecreated' => $video['createdDate'] / 1000,
 								'datemodified' => $video['modifiedDate'] / 1000,
-                                'source' => 'https://e.video-cdn.net/video?video-id=' . $video['id'] . '&player-id=' . $this->get_movingimage_option('playerid') . '&channel-id=' . intval($videoChannelId),
+                                'source' => 'https://e.video-cdn.net/video?video-id=' . $video['id'] . '&player-id=' . $this->get_effective_playerid() . '&channel-id=' . intval($videoChannelId),
                                 // Extra metadata for advanced filtering (not used by picker UI)
                                 'length' => $video['length'] ?? null,
                                 'createdDateMs' => $video['createdDate'] ?? null,

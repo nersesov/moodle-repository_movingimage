@@ -9,7 +9,10 @@ Browse, insert and upload videos from movingimage EVP (VideoManager Pro) in Mood
 ## Features
 
 - Browse movingimage video channels in any Moodle file picker
+- Enlarged preview still shown on hover and in the selection dialog
 - Insert videos as external links (embedded via the configured player)
+- Optionally choose a different player per insert via the picker search form
+  (falls back to the globally configured default player)
 - Upload new videos to movingimage EVP directly from Moodle via the virtual
   "Upload new video" folder shown at the repository root
 - Full-text and advanced search (tags, duration and date filters)
@@ -31,12 +34,16 @@ Browse, insert and upload videos from movingimage EVP (VideoManager Pro) in Mood
   auto-deletion, metadata fields) are all configured here
 - Player ID, security policy and metadata fields can be chosen via
   API-backed dropdowns once a connection is established
+- The configured player is the default; users can override it per insert
+  from the picker search form
 
 ## Usage
 
 - In any file picker, select "movingimage video repository"
 - Browse channels and pick a video to insert, or open the
   "Upload new video" folder to upload a file to movingimage EVP
+- To embed with a non-default player, click "Search" in the picker and
+  choose a player from the "Player" drop-down before inserting
 
 ## History
 
@@ -47,7 +54,7 @@ Browse, insert and upload videos from movingimage EVP (VideoManager Pro) in Mood
 
 ## Releases
 
-- Version: v3.0 (2026061702)
+- Version: v3.0 (2026061709)
 - Maturity: stable
 
 ## Support
