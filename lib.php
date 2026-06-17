@@ -55,7 +55,7 @@ class repository_movingimage extends repository {
     // Initialize service with error handling
     try {
         $this->service = new vmpro_client();
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
         // Log error but don't fail completely
         $this->service = null;
     }

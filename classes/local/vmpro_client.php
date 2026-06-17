@@ -277,16 +277,18 @@ class vmpro_client
     $data['include_sub_channels'] = $sub_channels;
     $data['include_custom_metadata'] = 'true';
     $data['include_keywords'] = 'true';
-  	if ($sortasc)
-  		$data['order'] = 'asc';
     if ($channel_assignments)
   		$data['include_channel_assignments'] = 'true';
   	if ($search != '')
   		$data['search_term'] = $search;
   	if ($public != '')
   		$data['publication_state'] = $public;
-  	if ($sort != '')
+  	if ($sort != '') {
   		$data['order_property'] = $sort;
+  		// The sort direction only has meaning together with a sort property.
+  		if ($sortasc)
+  			$data['order'] = 'asc';
+  	}
 
     // Debug logging
     $api_url = $this->VideoManagerID.'/videos';
