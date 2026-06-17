@@ -94,12 +94,12 @@ foreach ($channels as $index => $channel) {
     $channels[$index]['selected'] = ($index === 0);
 }
 
-// Hand over the runtime configuration to the AMD uploader module.
+// Hand over the runtime configuration to the AMD uploader module. The access
+// token is intentionally not passed here: it is held in the session and read
+// server-side by the create_asset web service. Passing it would also exceed the
+// js_call_amd argument length limit.
 $PAGE->requires->js_call_amd('repository_movingimage/uploader', 'init', array(array(
-    'sesskey'        => sesskey(),
-    'mitoken'        => optional_param('mitoken', '', PARAM_RAW),
-    'coursename'     => $COURSE->fullname,
-    'createasseturl' => (new moodle_url('/repository/movingimage/createasset.php'))->out(false),
+    'coursename' => $COURSE->fullname,
 )));
 
 echo $OUTPUT->header();

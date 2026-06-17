@@ -1,8 +1,9 @@
 /**
  * movingimage video upload handler.
  *
- * Controls the upload form display states, creates the video asset via
- * createasset.php and uploads the selected file to the movingimage EVP.
+ * Controls the upload form display states, creates the video asset via the
+ * repository_movingimage_create_asset web service and uploads the selected
+ * file to the movingimage EVP.
  *
  * @module     repository_movingimage/uploader
  * @copyright  2019 Rainer Möller
@@ -10,7 +11,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/str'], function(Str) {
+define(['core/str', 'core/ajax'], function(Str, Ajax) {
     'use strict';
 
     /** @type {XMLHttpRequest|null} Active upload request, used for aborting. */
@@ -123,7 +124,7 @@ define(['core/str'], function(Str) {
     /**
      * Upload the selected file to the given movingimage upload URL.
      *
-     * @param {String} url  Upload URL returned by createasset.php.
+     * @param {String} url  Upload URL returned by the create_asset service.
      * @param {File}   file Selected file.
      * @param {HTMLProgressElement} prog Progress bar element.
      */
@@ -168,53 +169,40 @@ define(['core/str'], function(Str) {
         el('channel').disabled = true;
 
         var file = el('fileA').files[0];
-        var req = new XMLHttpRequest();
         var prog = el('progress');
         if (!file) {
             return;
         }
+        prog.value = 0;
+        prog.max = 100;
 
-        req.onload = function() {
-            var result = this.responseText;
-            prog.value = 0;
-            prog.max = 100;
-
-            if (result.indexOf('http') >= 0) {
-                uploadFile(result, file, prog);
-            } else {
-                showStatus(strings.error, '#d9534f', true);
-                var detail = document.createElement('small');
-                detail.textContent = result;
-                el('percent').appendChild(detail);
-                el('cancelbutton').style.display = 'none';
-                el('redobutton').style.display = 'block';
+        var request = {
+            methodname: 'repository_movingimage_create_asset',
+            args: {
+                filename: file.name,
+                title: el('title').value,
+                description: el('description').value,
+                channel: parseInt(el('channel').value, 10) || 0,
+                keywords: el('keywords').value,
+                coursename: settings.coursename,
+                protected: el('protection').checked
             }
         };
 
-        req.onerror = function() {
+        Ajax.call([request])[0].then(function(response) {
+            if (response.uploadurl && response.uploadurl.indexOf('http') >= 0) {
+                uploadFile(response.uploadurl, file, prog);
+            } else {
+                showStatus(strings.error, '#d9534f', true);
+                el('cancelbutton').style.display = 'none';
+                el('redobutton').style.display = 'block';
+            }
+            return response;
+        }).catch(function() {
             showStatus(strings.requestError, '#d9534f', true);
-        };
-
-        req.open('POST', settings.createasseturl);
-        req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
-        var params = {
-            sesskey: settings.sesskey,
-            mitoken: settings.mitoken,
-            filename: file.name,
-            title: el('title').value,
-            description: el('description').value,
-            channel: el('channel').value,
-            keywords: el('keywords').value.split(','),
-            coursename: settings.coursename,
-            protected: el('protection').checked ? 1 : 0
-        };
-
-        var body = Object.keys(params).map(function(key) {
-            return key + '=' + encodeURIComponent(params[key]);
-        }).join('&');
-
-        req.send(body);
+            el('cancelbutton').style.display = 'none';
+            el('redobutton').style.display = 'block';
+        });
     };
 
     /**
@@ -242,10 +230,7 @@ define(['core/str'], function(Str) {
          * Initialise the uploader.
          *
          * @param {Object} config Runtime configuration.
-         * @param {String} config.sesskey         Moodle session key.
-         * @param {String} config.mitoken         movingimage access token.
-         * @param {String} config.coursename      Course full name.
-         * @param {String} config.createasseturl  URL of createasset.php.
+         * @param {String} config.coursename Course full name.
          */
         init: function(config) {
             settings = config;

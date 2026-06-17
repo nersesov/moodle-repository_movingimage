@@ -15,18 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details
+ * External service definitions for repository_movingimage.
  *
  * @package    repository_movingimage
- * @copyright  2019 Rainer Möller
  * @copyright  2025 lern.link GmbH, Vadym Nersesov
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026061708;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2024042200;        // Requires Moodle 4.5 or later.
-$plugin->component = 'repository_movingimage'; // Full name of the plugin (used for diagnostics).
-$plugin->release = 'v3.0';
-$plugin->maturity = MATURITY_STABLE;
+$functions = array(
+    'repository_movingimage_create_asset' => array(
+        'classname'   => 'repository_movingimage\external\create_asset',
+        'methodname'  => 'execute',
+        'description' => 'Create a movingimage video asset and return its upload URL.',
+        'type'        => 'write',
+        'ajax'        => true,
+        'capabilities' => '',
+    ),
+);
