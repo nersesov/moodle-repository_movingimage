@@ -1,0 +1,94 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template repository_movingimage/upload_form
+
+    movingimage video upload form, embedded into the file picker.
+
+    Context variables required for this template:
+    * channels - array of channels for the upload target dropdown
+        * id - channel id
+        * label - indented, human readable channel name
+        * selected - true for the channel preselected in the dropdown
+
+    Example context (json):
+    {
+        "channels": [
+            { "id": "1", "label": "All videos", "selected": true },
+            { "id": "2", "label": "    Sub channel", "selected": false }
+        ]
+    }
+}}
+<div class="fp-content card" style="height: 100%; width: 99%">
+    <form action="" method="post" enctype="multipart/form-data">
+        <div class="fp-formset">
+            <div class="form-group">
+                <div class="row">
+                    <div class="col-xs-6" id="choosebutton">
+                        <label class="btn btn-primary btn-file">
+                            {{#str}}upload_choose_button, repository_movingimage{{/str}}<input type="file" style="display: none;" onchange="fileChange();" id="fileA">
+                        </label>
+                    </div>
+                    <div class="col-xs-6">
+                        <span style="display:none;" id="fileInfo"></span>
+                    </div>
+                    <div id="progressbar" style="display: none;" class="col-xs-6">
+                        <progress id="progress" style="margin-top:10px"></progress> <span id="percent"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="metadata" style="display:none;">
+                <div class="form-group col-xs-10">
+                    <label for="title" style="margin-bottom:0">{{#str}}upload_title_input, repository_movingimage{{/str}}:</label>
+                    <input type="text" class="form-control" id="title">
+                </div>
+                <div class="form-group col-xs-2">
+                    <label for="secsetting" style="margin-bottom:0">{{#str}}upload_protected_input, repository_movingimage{{/str}}:</label>
+                    <input type="checkbox" class="form-control" id="protection">
+                </div>
+                <div class="form-group col-xs-12">
+                    <label for="description" style="margin-bottom:0">{{#str}}upload_description_input, repository_movingimage{{/str}}:</label>
+                    <textarea rows="2" class="form-control" id="description"></textarea>
+                </div>
+                <div class="form-group col-xs-12">
+                    <label for="keywords" style="margin-bottom:0">{{#str}}upload_keywords_input, repository_movingimage{{/str}}:</label>
+                    <textarea rows="1" class="form-control" id="keywords"></textarea>
+                </div>
+                <div class="form-group col-xs-12">
+                    <label for="channel" style="margin-bottom:0">{{#str}}upload_channel_input, repository_movingimage{{/str}}:</label>
+                    <select class="form-control" id="channel">
+                        {{#channels}}
+                        <option value="{{id}}" {{#selected}}selected="selected"{{/selected}}>{{label}}</option>
+                        {{/channels}}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div id="outtext"></div>
+
+    <div class="mdl-align" id="uploadbutton" style="display: none;">
+        <button class="btn-success btn" onclick="startUpload();">{{#str}}upload_start_button, repository_movingimage{{/str}}</button>
+    </div>
+    <div class="mdl-align" id="cancelbutton" style="display: none;">
+        <button class="btn-danger btn" onclick="abortUpload();">{{#str}}upload_cancel_button, repository_movingimage{{/str}}</button>
+    </div>
+    <div class="mdl-align" id="redobutton" style="display: none;">
+        <button class="btn-primary btn" onclick="resetForm();">{{#str}}upload_more_button, repository_movingimage{{/str}}</button>
+    </div>
+</div>

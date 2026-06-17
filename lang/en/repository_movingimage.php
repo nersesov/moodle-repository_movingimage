@@ -79,3 +79,5 @@ $string['upload_protected_input'] = 'Protected';
 $string['upload_description_input'] = 'Enter video description';
 $string['upload_keywords_input'] = 'Enter keywords (comma separated)';
 $string['upload_channel_input'] = 'Choose channel to upload to';
+$string['upload_choose_button'] = 'Choose file for upload';
+$string['upload_all_videos'] = 'All videos';

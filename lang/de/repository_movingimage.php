@@ -79,3 +79,5 @@ $string['upload_protected_input'] = 'Geschützt';
 $string['upload_description_input'] = 'Video-Beschreibung';
 $string['upload_keywords_input'] = 'Video-Keywords (kommagetrennt)';
 $string['upload_channel_input'] = 'Upload-Channel auswählen';
+$string['upload_choose_button'] = 'Datei für Upload auswählen';
+$string['upload_all_videos'] = 'Alle Videos';

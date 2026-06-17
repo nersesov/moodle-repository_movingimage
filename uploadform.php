@@ -42,104 +42,61 @@ $PAGE->set_pagelayout('embedded');
 function get_movingimage_option($config = '') {
     return \repository_movingimage\local\config::get($config);
 }
+
+// Create movingimage API access instance and try to log in.
+$vmpro = new vmpro_client();
+if (!$vmpro->tryAccessToken(get_movingimage_option('vmproid'), optional_param('mitoken', '', PARAM_RAW))) {
+    throw new moodle_exception('apierror-login', 'repository_movingimage',
+        get_string('admin_login_error', 'repository_movingimage'), '');
+}
+
+// Get the list of video channels and flatten it for the dropdown.
+$api_channels = $vmpro->getChannels(get_movingimage_option('rootchannel'));
+$channels = array();
+
+/**
+ * Recursively flatten the channel tree into a one dimensional list for the
+ * dropdown, prefixing nested channels with non-breaking spaces to illustrate
+ * their depth.
+ *
+ * @param array  $channel Channel node from the movingimage API.
+ * @param string $prefix  Indentation prefix for the current depth.
+ * @return void
+ */
+function movingimage_flatten_channel_tree(array $channel, string $prefix = '') {
+    global $channels;
+
+    $rootlabel = get_string('upload_all_videos', 'repository_movingimage');
+    $isroot = ($channel['name'] === 'root_channel');
+    if (!$isroot || $prefix !== '' || get_movingimage_option('uploadrootchannel') == 1) {
+        $channels[] = array(
+            'id'    => $channel['id'],
+            'label' => $prefix . ($isroot ? $rootlabel : $channel['name']),
+        );
+    }
+    if (isset($channel['children']) && is_array($channel['children'])) {
+        uasort($channel['children'], function ($a, $b) {
+            return strcmp($a['name'], $b['name']);
+        });
+        foreach ($channel['children'] as $child) {
+            // Indent each level by four non-breaking spaces.
+            movingimage_flatten_channel_tree($child, $prefix . "\u{00A0}\u{00A0}\u{00A0}\u{00A0}");
+        }
+    }
+}
+
+if (is_array($api_channels) && isset($api_channels['id'])) {
+    movingimage_flatten_channel_tree($api_channels);
+}
+
+// Mark the first channel as preselected in the dropdown.
+foreach ($channels as $index => $channel) {
+    $channels[$index]['selected'] = ($index === 0);
+}
+
+echo $OUTPUT->header();
+echo $OUTPUT->render_from_template('repository_movingimage/upload_form', array('channels' => array_values($channels)));
 ?>
-
-<?php echo $OUTPUT->header(); ?>
-    <div class="fp-content card" style="height: 100%; width: 99%">
-        <form action="" method="post" enctype="multipart/form-data">
-          <div class="fp-formset">
-
-            <!-- Top row: Upload button on startup, file name and progress during upload -->
-
-            <div class="form-group">
-                <div class="row">
-                    <div class="col-xs-6" id="choosebutton">
-                        <label class="btn btn-primary btn-file">
-                            Choose file for upload<input type="file" style="display: none;" onchange="fileChange();" id="fileA">
-                        </label>
-                    </div>
-                    <div class="col-xs-6">
-                        <span style="display:none;" id="fileInfo"></span>
-                    </div>
-                    <div id="progressbar" style="display: none;" class="col-xs-6">
-                        <progress id="progress" style="margin-top:10px"></progress> <span id="percent"></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Form metadata: Hidden on startup, displayed when file is chosen -->
-
-            <div id="metadata" style="display:none;">
-                <div class="form-group col-xs-10">
-                    <label for="title" style="margin-bottom:0"><?php echo get_string('upload_title_input', 'repository_movingimage'); ?>:</label>
-                    <input type="text" class="form-control" id="title">
-                </div>
-                <div class="form-group col-xs-2">
-                    <label for="secsetting" style="margin-bottom:0"><?php echo get_string('upload_protected_input', 'repository_movingimage'); ?>:</label>
-                    <input type="checkbox" class="form-control" id="protection">
-                </div>
-                <div class="form-group col-xs-12">
-                    <label for="description" style="margin-bottom:0"><?php echo get_string('upload_description_input', 'repository_movingimage'); ?>:</label>
-                    <textarea rows="2" class="form-control" id="description"></textarea>
-                </div>
-                <div class="form-group col-xs-12">
-                    <label for="keywords" style="margin-bottom:0"><?php echo get_string('upload_keywords_input', 'repository_movingimage'); ?>:</label>
-                    <textarea rows="1" class="form-control" id="keywords"></textarea>
-                </div>
-                <div class="form-group col-xs-12">
-                    <label for="channel" style="margin-bottom:0"><?php echo get_string('upload_channel_input', 'repository_movingimage'); ?>:</label>
-                    <select class="form-control" id="channel">
-
-                        <!-- PHP insert: Dynamically create channel dropdown from movingimage API information -->
-
-                        <?php
-
-                          // Create movimgimage API access instance and try to log in
-                          $vmpro = new vmpro_client();
-                            if (!$vmpro->tryAccessToken(get_movingimage_option('vmproid'),optional_param('mitoken','',PARAM_RAW)))
-                              throw new moodle_exception('apierror-login', 'repository_movingimage', get_string('admin_login_error', 'repository_movingimage'), '');
-
-                            // Get list of video channels
-                            $api_channels = $vmpro->getChannels(get_movingimage_option('rootchannel'));
-                            $channels = array();
-
-                            // Recursive helper function to flatten channel array to one dimension for dropdown output, include space prefixes to illustrate channel depth
-                            function flattenChannelTree ($channel,$prefix = '') {
-                                global $channels;
-                                if ($prefix.$channel['name'] != 'root_channel' || get_movingimage_option('uploadrootchannel') == 1)
-                                    $channels[] = array('id' => $channel['id'], 'name' => $prefix.($channel['name'] == 'root_channel' ? 'All videos' : $channel['name']));
-                                uasort($channel['children'], function ($a, $b) { return strcmp($a['name'], $b['name']); });
-                                foreach ($channel['children'] as $c)
-                                    flattenChannelTree($c,$prefix.'&nbsp;&nbsp;&nbsp;&nbsp;');
-                            }
-
-                            // Execute helper function and output channels as dropdown options
-                            if (is_array($api_channels) && isset($api_channels["id"]))
-                            flattenChannelTree($api_channels);
-                            foreach ($channels as $key => $channel)
-                                echo '
-                                              <option value="'.$channel['id'].'" '.($key == 0 ? 'selected="selected"' : '').'>'.$channel['name'].'</option>';
-                        ?>
-
-                    </select>
-                </div>
-            </div>
-          </div>
-        </form>
-        <div id="outtext"></div>
-
-        <!-- Form action buttons: Hidden on startup, displayed once at a time depending on status -->
-
-        <div class="mdl-align" id="uploadbutton" style="display: none;">
-            <button class="btn-success btn" onclick="startUpload();"/><?php echo get_string('upload_start_button', 'repository_movingimage'); ?></button>
-        </div>
-        <div class="mdl-align" id="cancelbutton" style="display: none;">
-            <button class="btn-danger btn" onclick="abortUpload();"/><?php echo get_string('upload_cancel_button', 'repository_movingimage'); ?></button>
-        </div>
-        <div class="mdl-align" id="redobutton" style="display: none;">
-            <button class="btn-primary btn" onclick="resetForm();"/><?php echo get_string('upload_more_button', 'repository_movingimage'); ?></button>
-        </div>
-    </div>
 
     <script>
 
