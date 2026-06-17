@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    repository_movingimagepicker
+ * @package    repository_movingimage
  * @copyright  2019 Rainer Möller
  * @copyright  2025 lern.link GmbH, Vadym Nersesov
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -25,26 +25,26 @@
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once($CFG->libdir.'/adminlib.php');
 if (!class_exists('VideoManagerPro'))
-	require_once($CFG->dirroot . '/repository/movingimagepicker/classes/vmpro.php');
+	require_once($CFG->dirroot . '/repository/movingimage/classes/vmpro.php');
 
 require_login();
 require_sesskey();
 
 // Set up the page for proper theme handling
 $PAGE->set_context(context_system::instance());
-$PAGE->set_url('/repository/movingimagepicker/uploadform.php');
+$PAGE->set_url('/repository/movingimage/uploadform.php');
 $PAGE->set_pagelayout('embedded');
 
 
 // Helper function to read a repository option, preferring the current
 // "repository_*" config name and falling back to the legacy name.
 function get_movingimage_option($config = '') {
-    $value = get_config('repository_movingimagepicker', $config);
+    $value = get_config('repository_movingimage', $config);
     if ($value !== false && $value !== '') {
         return trim($value);
     }
 
-    $value = get_config('movingimagepicker', $config);
+    $value = get_config('movingimage', $config);
     return ($value !== false) ? trim($value) : '';
 }
 ?>
@@ -76,23 +76,23 @@ function get_movingimage_option($config = '') {
 
             <div id="metadata" style="display:none;">
                 <div class="form-group col-xs-10">
-                    <label for="title" style="margin-bottom:0"><?php echo get_string('upload_title_input', 'repository_movingimagepicker'); ?>:</label>
+                    <label for="title" style="margin-bottom:0"><?php echo get_string('upload_title_input', 'repository_movingimage'); ?>:</label>
                     <input type="text" class="form-control" id="title">
                 </div>
                 <div class="form-group col-xs-2">
-                    <label for="secsetting" style="margin-bottom:0"><?php echo get_string('upload_protected_input', 'repository_movingimagepicker'); ?>:</label>
+                    <label for="secsetting" style="margin-bottom:0"><?php echo get_string('upload_protected_input', 'repository_movingimage'); ?>:</label>
                     <input type="checkbox" class="form-control" id="protection">
                 </div>
                 <div class="form-group col-xs-12">
-                    <label for="description" style="margin-bottom:0"><?php echo get_string('upload_description_input', 'repository_movingimagepicker'); ?>:</label>
+                    <label for="description" style="margin-bottom:0"><?php echo get_string('upload_description_input', 'repository_movingimage'); ?>:</label>
                     <textarea rows="2" class="form-control" id="description"></textarea>
                 </div>
                 <div class="form-group col-xs-12">
-                    <label for="keywords" style="margin-bottom:0"><?php echo get_string('upload_keywords_input', 'repository_movingimagepicker'); ?>:</label>
+                    <label for="keywords" style="margin-bottom:0"><?php echo get_string('upload_keywords_input', 'repository_movingimage'); ?>:</label>
                     <textarea rows="1" class="form-control" id="keywords"></textarea>
                 </div>
                 <div class="form-group col-xs-12">
-                    <label for="channel" style="margin-bottom:0"><?php echo get_string('upload_channel_input', 'repository_movingimagepicker'); ?>:</label>
+                    <label for="channel" style="margin-bottom:0"><?php echo get_string('upload_channel_input', 'repository_movingimage'); ?>:</label>
                     <select class="form-control" id="channel">
 
                         <!-- PHP insert: Dynamically create channel dropdown from movingimage API information -->
@@ -102,7 +102,7 @@ function get_movingimage_option($config = '') {
                           // Create movimgimage API access instance and try to log in
                           $vmpro = new VideoManagerPro();
                             if (!$vmpro->tryAccessToken(get_movingimage_option('vmproid'),optional_param('mitoken','',PARAM_RAW)))
-                              throw new moodle_exception('apierror-login', 'repository_movingimagepicker', get_string('admin_login_error', 'repository_movingimagepicker'), '');
+                              throw new moodle_exception('apierror-login', 'repository_movingimage', get_string('admin_login_error', 'repository_movingimage'), '');
 
                             // Get list of video channels
                             $api_channels = $vmpro->getChannels(get_movingimage_option('rootchannel'));
@@ -136,13 +136,13 @@ function get_movingimage_option($config = '') {
         <!-- Form action buttons: Hidden on startup, displayed once at a time depending on status -->
 
         <div class="mdl-align" id="uploadbutton" style="display: none;">
-            <button class="btn-success btn" onclick="startUpload();"/><?php echo get_string('upload_start_button', 'repository_movingimagepicker'); ?></button>
+            <button class="btn-success btn" onclick="startUpload();"/><?php echo get_string('upload_start_button', 'repository_movingimage'); ?></button>
         </div>
         <div class="mdl-align" id="cancelbutton" style="display: none;">
-            <button class="btn-danger btn" onclick="abortUpload();"/><?php echo get_string('upload_cancel_button', 'repository_movingimagepicker'); ?></button>
+            <button class="btn-danger btn" onclick="abortUpload();"/><?php echo get_string('upload_cancel_button', 'repository_movingimage'); ?></button>
         </div>
         <div class="mdl-align" id="redobutton" style="display: none;">
-            <button class="btn-primary btn" onclick="resetForm();"/><?php echo get_string('upload_more_button', 'repository_movingimagepicker'); ?></button>
+            <button class="btn-primary btn" onclick="resetForm();"/><?php echo get_string('upload_more_button', 'repository_movingimage'); ?></button>
         </div>
     </div>
 
@@ -165,7 +165,7 @@ function get_movingimage_option($config = '') {
           return;
 
         // Switch to "enter metadata" state once upload file is defined
-      document.getElementById('fileInfo').innerHTML = '<b>' + file.name + '</b><br><?php echo get_string('upload_filesize', 'repository_movingimagepicker'); ?>: ' + (Math.round(file.size / 1024 / 1024 * 10)/10) + ' MB';
+      document.getElementById('fileInfo').innerHTML = '<b>' + file.name + '</b><br><?php echo get_string('upload_filesize', 'repository_movingimage'); ?>: ' + (Math.round(file.size / 1024 / 1024 * 10)/10) + ' MB';
         document.getElementById('fileInfo').style.display = 'block';
         document.getElementById('uploadbutton').style.display = 'block';
         document.getElementById('metadata').style.display = 'block';
@@ -206,7 +206,7 @@ function get_movingimage_option($config = '') {
           client.abort();
 
         // Set display state to cancelled and offer re-uopload
-        document.getElementById('percent').innerHTML += '<h4><span class="label" style="background-color:#d9534f; padding:10px 30px;"<?php echo get_string('upload_cancelled', 'repository_movingimagepicker'); ?></span></h4>';
+        document.getElementById('percent').innerHTML += '<h4><span class="label" style="background-color:#d9534f; padding:10px 30px;"<?php echo get_string('upload_cancelled', 'repository_movingimage'); ?></span></h4>';
         document.getElementById('cancelbutton').style.display = 'none';
         document.getElementById('redobutton').style.display = 'block';
 
@@ -243,14 +243,14 @@ function get_movingimage_option($config = '') {
             client.onerror = function(e) {
 
                 // If upload process fails, display error message and log to console
-                document.getElementById('percent').innerHTML += '<h4><span class="label" style="background-color:#d9534f; padding:10px 30px;\"><?php echo get_string('upload_error', 'repository_movingimagepicker'); ?></span></h4>';
+                document.getElementById('percent').innerHTML += '<h4><span class="label" style="background-color:#d9534f; padding:10px 30px;\"><?php echo get_string('upload_error', 'repository_movingimage'); ?></span></h4>';
                 console.log('Error while uploading.');
             };
 
             client.onload = function(e) {
 
                 // display upload success and allow another upload via re-do button
-                document.getElementById('percent').innerHTML = '100%<h5><span class="label" style="background-color:#5cb85c; padding:5px 20px;\"><?php echo get_string('upload_success', 'repository_movingimagepicker'); ?></span></h5>';
+                document.getElementById('percent').innerHTML = '100%<h5><span class="label" style="background-color:#5cb85c; padding:5px 20px;\"><?php echo get_string('upload_success', 'repository_movingimage'); ?></span></h5>';
                 document.getElementById('cancelbutton').style.display = 'none';
                 document.getElementById('redobutton').style.display = 'block';
                 prog.value = prog.max;
@@ -286,7 +286,7 @@ function get_movingimage_option($config = '') {
             } else {
 
                 // If the result of helper function createasset.php did NOT return a URL, display error message and re-do button)
-                document.getElementById('percent').innerHTML += '<h4><span class="label" style="background-color:#d9534f; padding:10px 30px;\"><?php echo get_string('upload_error', 'repository_movingimagepicker'); ?></span></h4>'
+                document.getElementById('percent').innerHTML += '<h4><span class="label" style="background-color:#d9534f; padding:10px 30px;\"><?php echo get_string('upload_error', 'repository_movingimage'); ?></span></h4>'
                     + '<small>' + result + '</small>';
                 document.getElementById('cancelbutton').style.display = 'none';
                 document.getElementById('redobutton').style.display = 'block';
@@ -298,7 +298,7 @@ function get_movingimage_option($config = '') {
 
             // helper function in createasset.php returned an error, display it in the status bar and log to console
 
-            document.getElementById('percent').innerHTML += '<h4><span class=\"label\" style=\"background-color:#d9534f; padding:10px 30px;\"><?php echo get_string('upload_request_error', 'repository_movingimagepicker'); ?></span></h4>';
+            document.getElementById('percent').innerHTML += '<h4><span class=\"label\" style=\"background-color:#d9534f; padding:10px 30px;\"><?php echo get_string('upload_request_error', 'repository_movingimage'); ?></span></h4>';
             console.log('Error on upload request!');
         }
 

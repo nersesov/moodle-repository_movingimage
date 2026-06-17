@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * repository_movingimagepicker language strings
+ * repository_movingimage language strings
  *
- * @package    repository_movingimagepicker
+ * @package    repository_movingimage
  * @copyright  2019 Rainer Möller
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -42,7 +42,7 @@ $string['sortby'] = 'Sort video list by "title", "createdDate", "modifiedDate", 
 $string['sortasc'] = 'Sort video list ascending';
 
 $string['configplugin'] = 'Configuration for movingimage video picker repository';
-$string['movingimagepicker:view'] = 'View movingimage repository';
+$string['movingimage:view'] = 'View movingimage repository';
 $string['pluginname_help'] = 'Pick movingimage Videos';
 $string['pluginname'] = 'movingimage video picker';
 $string['search'] = 'Search';

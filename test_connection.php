@@ -17,13 +17,13 @@
 /**
  * Connection diagnostic script for movingimage Moodle connector
  *
- * @package    repository_movingimagepicker
+ * @package    repository_movingimage
  * @copyright  2024 movingimage
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 require_once('../../config.php');
-require_once($CFG->dirroot . '/repository/movingimagepicker/classes/vmpro.php');
+require_once($CFG->dirroot . '/repository/movingimage/classes/vmpro.php');
 
 // Must be run by an admin
 require_login();
@@ -31,7 +31,7 @@ require_capability('moodle/site:config', context_system::instance());
 
 // Set up the page
 $PAGE->set_context(context_system::instance());
-$PAGE->set_url('/repository/movingimagepicker/test_connection.php');
+$PAGE->set_url('/repository/movingimage/test_connection.php');
 $PAGE->set_title('movingimage Connection Test');
 $PAGE->set_heading('movingimage Connection Test');
 
@@ -47,11 +47,11 @@ echo html_writer::tag('h2', 'movingimage Connection Diagnostic');
  * @return string Configuration value, empty string if not set.
  */
 function movingimage_get_picker_option(string $config): string {
-    $value = get_config('repository_movingimagepicker', $config);
+    $value = get_config('repository_movingimage', $config);
     if ($value !== false && $value !== '') {
         return trim($value);
     }
-    $value = get_config('movingimagepicker', $config);
+    $value = get_config('movingimage', $config);
     return ($value !== false) ? trim($value) : '';
 }
 

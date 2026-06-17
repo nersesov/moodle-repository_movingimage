@@ -17,7 +17,7 @@
 /**
  * AJAX endpoint: create a movingimage video asset and return its upload URL.
  *
- * @package    repository_movingimagepicker
+ * @package    repository_movingimage
  * @copyright  2019 Rainer Möller
  * @copyright  2025 lern.link GmbH, Vadym Nersesov
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,7 +27,7 @@ define('AJAX_SCRIPT', true);
 
 require_once(__DIR__ . '/../../config.php');
 if (!class_exists('VideoManagerPro')) {
-    require_once($CFG->dirroot . '/repository/movingimagepicker/classes/vmpro.php');
+    require_once($CFG->dirroot . '/repository/movingimage/classes/vmpro.php');
 }
 
 // Access control: an authenticated user with a valid session is required.
@@ -41,12 +41,12 @@ require_sesskey();
  * @param string $config Configuration key.
  * @return string Configuration value, empty string if not set.
  */
-function movingimagepicker_get_option(string $config): string {
-    $value = get_config('repository_movingimagepicker', $config);
+function movingimage_get_option(string $config): string {
+    $value = get_config('repository_movingimage', $config);
     if ($value !== false && $value !== '') {
         return trim($value);
     }
-    $value = get_config('movingimagepicker', $config);
+    $value = get_config('movingimage', $config);
     return ($value !== false) ? trim($value) : '';
 }
 
@@ -57,7 +57,7 @@ function movingimagepicker_get_option(string $config): string {
  * @param string $message Message to return to the uploader.
  * @return void
  */
-function movingimagepicker_fail(int $code, string $message): void {
+function movingimage_fail(int $code, string $message): void {
     http_response_code($code);
     echo $message;
     exit;
@@ -72,8 +72,8 @@ $channel = optional_param('channel', 0, PARAM_INT);
 $coursename = optional_param('coursename', '', PARAM_TEXT);
 
 // Security-relevant values are derived server-side and never trusted from the client.
-$vmproid = movingimagepicker_get_option('vmproid');
-$ssoenabled = (movingimagepicker_get_option('sso') === '1');
+$vmproid = movingimage_get_option('vmproid');
+$ssoenabled = (movingimage_get_option('sso') === '1');
 
 // The access token is held in the session; fall back to the posted token if absent.
 $mitoken = (!empty($SESSION->miAccessToken))
@@ -81,7 +81,7 @@ $mitoken = (!empty($SESSION->miAccessToken))
     : optional_param('mitoken', '', PARAM_RAW);
 
 if (empty($vmproid) || empty($mitoken)) {
-    movingimagepicker_fail(401, get_string('admin_login_error', 'repository_movingimagepicker'));
+    movingimage_fail(401, get_string('admin_login_error', 'repository_movingimage'));
 }
 
 // Author identity is taken from the logged-in user, not from the request.
@@ -91,7 +91,7 @@ $email = $USER->email;
 // Create new instance and validate the access token against the API.
 $vmpro = new VideoManagerPro();
 if (!$vmpro->tryAccessToken($vmproid, $mitoken)) {
-    movingimagepicker_fail(401, get_string('admin_login_error', 'repository_movingimagepicker'));
+    movingimage_fail(401, get_string('admin_login_error', 'repository_movingimage'));
 }
 
 // Determine the owner group for SSO uploads (based on the user's email).
@@ -104,13 +104,13 @@ if ($ssoenabled) {
 $entity = $vmpro->createVideoEntity($filename, $title, $description, $keywords, $channel, $group);
 
 if (!is_array($entity) || !isset($entity['id'])) {
-    movingimagepicker_fail(404, get_string('upload_error', 'repository_movingimagepicker'));
+    movingimage_fail(404, get_string('upload_error', 'repository_movingimage'));
 }
 
 // Retrieve the upload URL for the freshly created asset.
 $url = $vmpro->getUploadURL($entity['id']);
 if (!is_array($url) || !isset($url['upload_url'])) {
-    movingimagepicker_fail(404, get_string('upload_error', 'repository_movingimagepicker'));
+    movingimage_fail(404, get_string('upload_error', 'repository_movingimage'));
 }
 
 // Return the upload URL to the uploader.
@@ -118,9 +118,9 @@ http_response_code(200);
 echo $url['upload_url'];
 
 // Persist Moodle metadata into the custom metadata fields configured by the admin.
-$coursefield = movingimagepicker_get_option('coursefield');
-$namefield = movingimagepicker_get_option('namefield');
-$emailfield = movingimagepicker_get_option('emailfield');
+$coursefield = movingimage_get_option('coursefield');
+$namefield = movingimage_get_option('namefield');
+$emailfield = movingimage_get_option('emailfield');
 
 $metadata = [];
 if ($coursefield !== '') {
@@ -137,7 +137,7 @@ if (count($metadata) > 0) {
 }
 
 // Apply the configured auto-deletion retention period, if any.
-$deletiondays = (int) movingimagepicker_get_option('deletiondays');
+$deletiondays = (int) movingimage_get_option('deletiondays');
 if ($deletiondays > 0) {
     $deletiontimestamp = (time() + $deletiondays * DAYSECS) * 1000;
     $vmpro->setVideoDeletionTimer($entity['id'], $deletiontimestamp);
@@ -145,7 +145,7 @@ if ($deletiondays > 0) {
 
 // Apply the configured security policy when the uploader requested protection.
 $protected = optional_param('protected', 0, PARAM_BOOL);
-$securitypolicyid = (int) movingimagepicker_get_option('securitypolicyid');
+$securitypolicyid = (int) movingimage_get_option('securitypolicyid');
 if ($protected && $securitypolicyid > 0) {
     $vmpro->setVideoData($entity['id'], ['securityPolicyId' => $securitypolicyid]);
 }

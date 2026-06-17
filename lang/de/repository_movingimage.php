@@ -15,15 +15,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * repository_movingimagepicker
+ * repository_movingimage
  *
- * @package    repository_movingimagepicker
+ * @package    repository_movingimage
  * @copyright  2019 Rainer Möller
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 $string['configplugin'] = 'Konfiguration für movingimage Video-Picker Repository';
-$string['movingimagepicker:view'] = 'View movingimage Video-Picker Repository';
+$string['movingimage:view'] = 'View movingimage Video-Picker Repository';
 $string['pluginname_help'] = 'Pick movingimage Videos';
 $string['pluginname'] = 'movingimage Video-Picker';
 $string['search'] = 'Suche';

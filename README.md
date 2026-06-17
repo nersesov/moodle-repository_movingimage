@@ -1,13 +1,13 @@
-# Moodle Repository: movingimage video picker (repository_movingimagepicker)
+# Moodle Repository: movingimage video picker (repository_movingimage)
 
 Browse and insert videos from movingimage EVP into Moodle.
 
-- Component: `repository_movingimagepicker`
+- Component: `repository_movingimage`
 - Moodle: 4.5+
 - License: GNU GPL v3 or later
 
 Installation
-- Copy this folder to: /path/to/moodle/repository/movingimagepicker/
+- Copy this folder to: /path/to/moodle/repository/movingimage/
 - Visit Site administration → Notifications to complete installation
 
 Configuration

@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * repository_movingimagepicker
+ * repository_movingimage
  *
- * @package    repository_movingimagepicker
+ * @package    repository_movingimage
  *
  * @copyright  2019 Rainer Möller
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,7 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $capabilities = array(
 
-    'repository/movingimagepicker:view' => array(
+    'repository/movingimage:view' => array(
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes' => array(

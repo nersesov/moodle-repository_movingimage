@@ -17,7 +17,7 @@
 /**
  * Version details
  *
- * @package    repository_movingimagepicker
+ * @package    repository_movingimage
  * @copyright  2019 Rainer Möller
  * @copyright  2025 lern.link GmbH, Vadym Nersesov
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -25,8 +25,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026061701;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2026061702;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;        // Requires Moodle 4.5 or later.
-$plugin->component = 'repository_movingimagepicker'; // Full name of the plugin (used for diagnostics).
+$plugin->component = 'repository_movingimage'; // Full name of the plugin (used for diagnostics).
 $plugin->release = 'v3.0';
 $plugin->maturity = MATURITY_STABLE;
