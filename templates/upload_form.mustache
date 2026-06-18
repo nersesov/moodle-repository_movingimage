@@ -33,62 +33,90 @@
         ]
     }
 }}
-<div class="fp-content card" style="height: 100%; width: 99%">
+<div class="fp-content container-fluid p-3 card" style="height: 100%; width: 99%; border: none;">
     <form action="" method="post" enctype="multipart/form-data">
         <div class="fp-formset">
-            <div class="form-group">
-                <div class="row">
-                    <div class="col-xs-6" id="choosebutton">
-                        <label class="btn btn-primary btn-file">
-                            {{#str}}upload_choose_button, repository_movingimage{{/str}}<input type="file" style="display: none;" id="fileA">
-                        </label>
-                    </div>
-                    <div class="col-xs-6">
-                        <span style="display:none;" id="fileInfo"></span>
-                    </div>
-                    <div id="progressbar" style="display: none;" class="col-xs-6">
-                        <progress id="progress" style="margin-top:10px"></progress> <span id="percent"></span>
-                    </div>
+            <!-- Modern Drag and Drop Dropzone -->
+            <div class="form-group mb-3 text-center" id="choosebutton">
+                <input type="file" id="fileA" style="display: none;" />
+                <div id="dropzone" class="p-4 border rounded card bg-light text-muted d-flex flex-column align-items-center justify-content-center" style="border: 2px dashed #ced4da !important; cursor: pointer; transition: all 0.2s ease-in-out;">
+                    <i class="fa fa-cloud-upload fa-3x text-primary mb-2 mb-md-3"></i>
+                    <h5 class="mb-1 text-dark" style="font-size: 1.15rem;">{{#str}}upload_drag_drop_text, repository_movingimage{{/str}}</h5>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2">
+                        {{#str}}upload_choose_button, repository_movingimage{{/str}}
+                    </button>
                 </div>
             </div>
 
-            <div id="metadata" style="display:none;">
-                <div class="form-group col-xs-10">
-                    <label for="title" style="margin-bottom:0">{{#str}}upload_title_input, repository_movingimage{{/str}}:</label>
-                    <input type="text" class="form-control" id="title">
+            <!-- Modern File info and progress bar -->
+            <div class="row g-2 align-items-center mb-3">
+                <div class="col-12 text-center">
+                    <div id="fileInfo" class="alert alert-info py-2 d-none" role="alert" style="display: none;"></div>
                 </div>
-                <div class="form-group col-xs-2">
-                    <label for="secsetting" style="margin-bottom:0">{{#str}}upload_protected_input, repository_movingimage{{/str}}:</label>
-                    <input type="checkbox" class="form-control" id="protection">
+                <div id="progressbar" class="col-12 d-none" style="display: none;">
+                    <!-- Modern Bootstrap Progress-bar -->
+                    <div class="progress" style="height: 25px;">
+                        <div id="modern-progress" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                    <!-- Legacy hidden progress elements to avoid JS reference crashes -->
+                    <progress id="progress" class="d-none" style="display: none;"></progress>
+                    <span id="percent" class="d-none" style="display: none;"></span>
                 </div>
-                <div class="form-group col-xs-12">
-                    <label for="description" style="margin-bottom:0">{{#str}}upload_description_input, repository_movingimage{{/str}}:</label>
-                    <textarea rows="2" class="form-control" id="description"></textarea>
-                </div>
-                <div class="form-group col-xs-12">
-                    <label for="keywords" style="margin-bottom:0">{{#str}}upload_keywords_input, repository_movingimage{{/str}}:</label>
-                    <textarea rows="1" class="form-control" id="keywords"></textarea>
-                </div>
-                <div class="form-group col-xs-12">
-                    <label for="channel" style="margin-bottom:0">{{#str}}upload_channel_input, repository_movingimage{{/str}}:</label>
-                    <select class="form-control" id="channel">
-                        {{#channels}}
-                        <option value="{{id}}" {{#selected}}selected="selected"{{/selected}}>{{label}}</option>
-                        {{/channels}}
-                    </select>
+            </div>
+
+            <!-- Modern structured metadata input fields -->
+            <div id="metadata" class="d-none border rounded p-3 bg-white shadow-sm mb-3" style="display: none;">
+                <div class="row g-3">
+                    <div class="col-md-9 col-12">
+                        <div class="form-group">
+                            <label for="title" class="form-label font-weight-bold card-text text-muted mb-1">{{#str}}upload_title_input, repository_movingimage{{/str}}:</label>
+                            <input type="text" class="form-control" id="title" placeholder="{{#str}}upload_title_input, repository_movingimage{{/str}}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-12 d-flex align-items-end justify-content-md-center justify-content-start pb-1">
+                        <div class="form-check form-switch card-text text-muted">
+                            <input class="form-check-input" type="checkbox" id="protection">
+                            <label class="form-check-label font-weight-bold" for="protection">{{#str}}upload_protected_input, repository_movingimage{{/str}}</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="description" class="form-label font-weight-bold card-text text-muted mb-1">{{#str}}upload_description_input, repository_movingimage{{/str}}:</label>
+                            <textarea rows="2" class="form-control" id="description" placeholder="{{#str}}upload_description_input, repository_movingimage{{/str}}"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="keywords" class="form-label font-weight-bold card-text text-muted mb-1">{{#str}}upload_keywords_input, repository_movingimage{{/str}}:</label>
+                            <textarea rows="1" class="form-control" id="keywords" placeholder="{{#str}}upload_keywords_input, repository_movingimage{{/str}}"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="channel" class="form-label font-weight-bold card-text text-muted mb-1">{{#str}}upload_channel_input, repository_movingimage{{/str}}:</label>
+                            <select class="form-select custom-select" id="channel">
+                                {{#channels}}
+                                <option value="{{id}}" {{#selected}}selected="selected"{{/selected}}>{{label}}</option>
+                                {{/channels}}
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </form>
-    <div id="outtext"></div>
+    <div id="outtext" class="text-center my-2"></div>
 
-    <div class="mdl-align" id="uploadbutton" style="display: none;">
-        <button class="btn-success btn">{{#str}}upload_start_button, repository_movingimage{{/str}}</button>
-    </div>
-    <div class="mdl-align" id="cancelbutton" style="display: none;">
-        <button class="btn-danger btn">{{#str}}upload_cancel_button, repository_movingimage{{/str}}</button>
-    </div>
-    <div class="mdl-align" id="redobutton" style="display: none;">
-        <button class="btn-primary btn">{{#str}}upload_more_button, repository_movingimage{{/str}}</button>
+    <!-- UI Action Buttons Styled Nicely -->
+    <div class="d-flex justify-content-center gap-2 mt-2">
+        <div id="uploadbutton" class="d-none" style="display: none;">
+            <button class="btn btn-success d-flex align-items-center"><i class="fa fa-upload me-2 mr-2"></i> {{#str}}upload_start_button, repository_movingimage{{/str}}</button>
+        </div>
+        <div id="cancelbutton" class="d-none" style="display: none;">
+            <button class="btn btn-danger d-flex align-items-center"><i class="fa fa-times me-2 mr-2"></i> {{#str}}upload_cancel_button, repository_movingimage{{/str}}</button>
+        </div>
+        <div id="redobutton" class="d-none" style="display: none;">
+            <button class="btn btn-primary d-flex align-items-center"><i class="fa fa-plus me-2 mr-2"></i> {{#str}}upload_more_button, repository_movingimage{{/str}}</button>
+        </div>
     </div>
 </div>

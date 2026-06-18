@@ -34,6 +34,26 @@ define(['core/str', 'core/ajax'], function(Str, Ajax) {
     };
 
     /**
+     * Helper to show or hide elements using Bootstrap class list or fallback display style.
+     *
+     * @param {String}  id      The element ID.
+     * @param {Boolean} visible Whether the element should be visible.
+     */
+    var setVisible = function(id, visible) {
+        var element = el(id);
+        if (!element) {
+            return;
+        }
+        if (visible) {
+            element.style.display = '';
+            element.classList.remove('d-none');
+        } else {
+            element.style.display = 'none';
+            element.classList.add('d-none');
+        }
+    };
+
+    /**
      * Render a coloured status label into the percent element.
      *
      * @param {String} text       Status message.
@@ -42,20 +62,22 @@ define(['core/str', 'core/ajax'], function(Str, Ajax) {
      */
     var showStatus = function(text, background, append) {
         var label = document.createElement('span');
-        label.className = 'label';
+        label.className = 'label label-info text-white p-2 d-inline-block rounded';
         label.style.background = background;
-        label.style.padding = '10px 30px';
         label.textContent = text;
 
-        var heading = document.createElement('h4');
+        var heading = document.createElement('h5');
+        heading.className = 'mt-3';
         heading.appendChild(label);
 
-        var percent = el('percent');
-        if (append) {
-            percent.appendChild(heading);
-        } else {
-            percent.innerHTML = '';
-            percent.appendChild(heading);
+        var outtext = el('outtext');
+        if (outtext) {
+            if (append) {
+                outtext.appendChild(heading);
+            } else {
+                outtext.innerHTML = '';
+                outtext.appendChild(heading);
+            }
         }
     };
 
@@ -78,11 +100,18 @@ define(['core/str', 'core/ajax'], function(Str, Ajax) {
         info.appendChild(document.createElement('br'));
         info.appendChild(document.createTextNode(strings.filesize + ': ' + sizeMb + ' MB'));
 
-        info.style.display = 'block';
-        el('uploadbutton').style.display = 'block';
-        el('metadata').style.display = 'block';
+        setVisible('fileInfo', true);
+        setVisible('uploadbutton', true);
+        setVisible('metadata', true);
+
         el('progress').value = 0;
         el('percent').innerHTML = '0%';
+        var modernProg = el('modern-progress');
+        if (modernProg) {
+            modernProg.style.width = '0%';
+            modernProg.textContent = '0%';
+            modernProg.setAttribute('aria-valuenow', 0);
+        }
     };
 
     /**
@@ -91,13 +120,19 @@ define(['core/str', 'core/ajax'], function(Str, Ajax) {
     var resetForm = function() {
         el('fileA').value = '';
         el('fileInfo').innerHTML = '';
-        el('fileInfo').style.display = 'none';
-        el('uploadbutton').style.display = 'none';
-        el('metadata').style.display = 'none';
+        setVisible('fileInfo', false);
+        setVisible('uploadbutton', false);
+        setVisible('metadata', false);
         el('progress').value = 0;
         el('percent').innerHTML = '0%';
-        el('cancelbutton').style.display = 'none';
-        el('redobutton').style.display = 'block';
+        var modernProg = el('modern-progress');
+        if (modernProg) {
+            modernProg.style.width = '0%';
+            modernProg.textContent = '0%';
+            modernProg.setAttribute('aria-valuenow', 0);
+        }
+        setVisible('cancelbutton', false);
+        setVisible('redobutton', false);
         el('title').disabled = false;
         el('description').disabled = false;
         el('keywords').disabled = false;
@@ -105,8 +140,12 @@ define(['core/str', 'core/ajax'], function(Str, Ajax) {
         el('title').value = '';
         el('description').value = '';
         el('keywords').value = '';
-        el('choosebutton').style.display = 'block';
-        el('progressbar').style.display = 'none';
+        setVisible('choosebutton', true);
+        setVisible('progressbar', false);
+        var outtext = el('outtext');
+        if (outtext) {
+            outtext.innerHTML = '';
+        }
     };
 
     /**
@@ -117,8 +156,8 @@ define(['core/str', 'core/ajax'], function(Str, Ajax) {
             client.abort();
         }
         showStatus(strings.cancelled, '#d9534f', true);
-        el('cancelbutton').style.display = 'none';
-        el('redobutton').style.display = 'block';
+        setVisible('cancelbutton', false);
+        setVisible('redobutton', true);
     };
 
     /**
@@ -137,15 +176,27 @@ define(['core/str', 'core/ajax'], function(Str, Ajax) {
 
         client.onload = function() {
             showStatus(strings.success, '#5cb85c', false);
-            el('cancelbutton').style.display = 'none';
-            el('redobutton').style.display = 'block';
+            setVisible('cancelbutton', false);
+            setVisible('redobutton', true);
             prog.value = prog.max;
+            var modernProg = el('modern-progress');
+            if (modernProg) {
+                modernProg.style.width = '100%';
+                modernProg.textContent = '100%';
+                modernProg.setAttribute('aria-valuenow', 100);
+            }
         };
 
         client.upload.onprogress = function(e) {
             var p = Math.round(100 / e.total * e.loaded);
             el('progress').value = p;
             el('percent').innerHTML = p + '%';
+            var modernProg = el('modern-progress');
+            if (modernProg) {
+                modernProg.style.width = p + '%';
+                modernProg.textContent = p + '%';
+                modernProg.setAttribute('aria-valuenow', p);
+            }
         };
 
         client.open('POST', url);
@@ -159,10 +210,10 @@ define(['core/str', 'core/ajax'], function(Str, Ajax) {
      * Create the video asset and start the upload.
      */
     var startUpload = function() {
-        el('choosebutton').style.display = 'none';
-        el('progressbar').style.display = 'block';
-        el('uploadbutton').style.display = 'none';
-        el('cancelbutton').style.display = 'block';
+        setVisible('choosebutton', false);
+        setVisible('progressbar', true);
+        setVisible('uploadbutton', false);
+        setVisible('cancelbutton', true);
         el('title').disabled = true;
         el('description').disabled = true;
         el('keywords').disabled = true;
@@ -194,14 +245,14 @@ define(['core/str', 'core/ajax'], function(Str, Ajax) {
                 uploadFile(response.uploadurl, file, prog);
             } else {
                 showStatus(strings.error, '#d9534f', true);
-                el('cancelbutton').style.display = 'none';
-                el('redobutton').style.display = 'block';
+                setVisible('cancelbutton', false);
+                setVisible('redobutton', true);
             }
             return response;
         }).catch(function() {
             showStatus(strings.requestError, '#d9534f', true);
-            el('cancelbutton').style.display = 'none';
-            el('redobutton').style.display = 'block';
+            setVisible('cancelbutton', false);
+            setVisible('redobutton', true);
         });
     };
 
@@ -210,6 +261,49 @@ define(['core/str', 'core/ajax'], function(Str, Ajax) {
      */
     var registerListeners = function() {
         el('fileA').addEventListener('change', fileChange);
+
+        var dropzone = el('dropzone');
+        if (dropzone) {
+            dropzone.addEventListener('click', function() {
+                el('fileA').click();
+            });
+
+            var preventDefaults = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            };
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
+                dropzone.addEventListener(eventName, preventDefaults);
+            });
+
+            ['dragenter', 'dragover'].forEach(function(eventName) {
+                dropzone.addEventListener(eventName, function() {
+                    dropzone.classList.remove('bg-light');
+                    dropzone.classList.add('bg-white');
+                    dropzone.classList.add('shadow-sm');
+                    dropzone.style.borderColor = '#0d6efd';
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(function(eventName) {
+                dropzone.addEventListener(eventName, function() {
+                    dropzone.classList.remove('bg-white');
+                    dropzone.classList.remove('shadow-sm');
+                    dropzone.classList.add('bg-light');
+                    dropzone.style.borderColor = '#ced4da';
+                });
+            });
+
+            dropzone.addEventListener('drop', function(e) {
+                var dt = e.dataTransfer;
+                var files = dt.files;
+                if (files && files.length > 0) {
+                    el('fileA').files = files;
+                    fileChange();
+                }
+            });
+        }
 
         var uploadButton = el('uploadbutton').querySelector('button');
         if (uploadButton) {

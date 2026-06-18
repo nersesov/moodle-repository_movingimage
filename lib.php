@@ -163,6 +163,9 @@ class repository_movingimage extends repository {
 
         }
 
+        // Connection & Account Settings Header
+        $mform->addElement('header', 'connection_settings', get_string('connection_settings', 'repository_movingimage'));
+
         // Provide text input for movingimage EVP admin credentials
         $mform->addElement('text', 'login', get_string('login', 'repository_movingimage'));
         $mform->setType('login', PARAM_RAW_TRIMMED);
@@ -178,6 +181,9 @@ class repository_movingimage extends repository {
         $mform->setType('vmproid', PARAM_INT);
         $mform->addRule('vmproid', null, 'required', null, 'client');
         $mform->addRule('vmproid', null, 'numeric', null, 'client');
+
+        // Player & Sorting Settings Header
+        $mform->addElement('header', 'player_settings', get_string('player_settings', 'repository_movingimage'));
 
         // Player ID setting: dropdown if API available, otherwise text
         if ($validVMPro) {
@@ -219,6 +225,9 @@ class repository_movingimage extends repository {
         $mform->addElement('advcheckbox', 'sortasc', get_string('sortasc', 'repository_movingimage'),'',[],array(0,1));
         $mform->setType('sortasc', PARAM_INT);
         $mform->setDefault('sortasc', 1);
+
+        // SSO & Keycloak Authentication Settings Header
+        $mform->addElement('header', 'sso_settings', get_string('sso_settings', 'repository_movingimage'));
 
         // Provide text input for login URL for VideoManager Pro
         $mform->addElement('text', 'vmprologin', get_string('vmprologin', 'repository_movingimage'));
@@ -304,6 +313,9 @@ class repository_movingimage extends repository {
         $mform->disabledIf('adminrole','sso');
 
         // --- Video upload settings (merged from the former movingimageupload repository) ---
+
+        // Upload, Security & Metadata Settings Header
+        $mform->addElement('header', 'upload_settings', get_string('upload_settings', 'repository_movingimage'));
 
         // Provide video security policy either as dropdown or as numeric ID
         if ($validVMPro) {
@@ -784,50 +796,50 @@ class repository_movingimage extends repository {
   }
 
 
-  // Custom search form: standard fulltext box plus an optional player selector.
-  // The selected player is applied to the embed URL of inserted videos.
-  public function print_search() {
+  /**
+   * Custom search form: renders standard fulltext box plus an optional player selector
+   * using a Mustache template. The selected player is applied to the embed URL of inserted videos.
+   *
+   * @return string HTML search form.
+   */
+  public function print_search(): string
+  {
+		global $OUTPUT;
 		global $SESSION;
 
-		// Standard hidden fields expected by the file picker search form.
-		$str  = '<input type="hidden" name="repo_id" value="' . s($this->id) . '" />';
-		$str .= '<input type="hidden" name="ctx_id" value="' . s($this->context->id) . '" />';
-		$str .= '<input type="hidden" name="seekey" value="' . sesskey() . '" />';
-
-		// Fulltext search field (the name "s" is read by repository_ajax.php).
-		$str .= '<label>' . get_string('search', 'repository_movingimage') . '</label><br />';
-		$str .= '<input type="text" name="s" value="" /><br />';
-
-		// Marker so search() can tell a real form submit (incl. "Default" choice)
-		// apart from result paging, where the player field is not resubmitted.
-		$str .= '<input type="hidden" name="movingimage_searchform" value="1" />';
-
-		// Optional player selector - only rendered when the API can provide players.
 		$players = array();
 		if ($this->getMiAccessToken()) {
 			$players = $this->service->getPlayers();
 		}
 
-		if (is_array($players) && !empty($players)) {
+		$player_options = array();
+		$has_players = is_array($players) && !empty($players);
+
+		if ($has_players) {
 			$selected = isset($SESSION->{'movingimage_player_' . $this->id})
 				? (string)$SESSION->{'movingimage_player_' . $this->id}
 				: '';
 
-			$str .= '<label>' . get_string('chooseplayer', 'repository_movingimage') . '</label><br />';
-			$str .= '<select name="movingimage_player">';
-			// Empty value falls back to the globally configured default player.
-			$str .= '<option value=""' . ($selected === '' ? ' selected="selected"' : '') . '>'
-				. get_string('defaultplayer', 'repository_movingimage') . '</option>';
 			foreach ($players as $pid => $pdata) {
 				$name = isset($pdata['name']) ? $pdata['name'] : (string)$pid;
-				$isselected = ($selected === (string)$pid) ? ' selected="selected"' : '';
-				$str .= '<option value="' . s($pid) . '"' . $isselected . '>'
-					. s($name . ' (' . $pid . ')') . '</option>';
+				$player_options[] = array(
+					'id' => (string)$pid,
+					'name' => $name . ' (' . $pid . ')',
+					'selected' => ($selected === (string)$pid)
+				);
 			}
-			$str .= '</select><br />';
 		}
 
-		return $str;
+		$context = array(
+			'repo_id' => $this->id,
+			'ctx_id' => $this->context->id,
+			'seekey' => sesskey(),
+			's_value' => '',
+			'has_players' => $has_players,
+			'players' => $player_options
+		);
+
+		return $OUTPUT->render_from_template('repository_movingimage/search_form', $context);
   }
 
 
@@ -990,15 +1002,47 @@ class repository_movingimage extends repository {
 					// Create an array that contains all videos
 					foreach ($videos['videos'] as $video) {
                         $videoChannelId = $channelid ?: $this->get_movingimage_option('rootchannel');
+
+                        // Format video duration.
+                        $durationstr = '';
+                        if (isset($video['length'])) {
+                            $sec = (int)$video['length'];
+                            if ($sec >= 3600) {
+                                $durationstr = floor($sec / 3600) . ':' . sprintf('%02d', floor(($sec % 3600) / 60)) . ':' . sprintf('%02d', $sec % 60);
+                            } else {
+                                $durationstr = floor($sec / 60) . ':' . sprintf('%02d', $sec % 60);
+                            }
+                        }
+
+                        // Localize published date.
+                        $pubdate = (isset($video['createdDate']) && $video['createdDate'] > 0)
+                            ? userdate(intval($video['createdDate'] / 1000), get_string('strftimedatetime', 'langconfig'))
+                            : '';
+
+                        // Build an informative hover tooltip (Moodle UI title attribute).
+                        $tooltip = $video['title'];
+                        if (!empty($durationstr)) {
+                            $tooltip .= "\n" . get_string('video_duration', 'repository_movingimage') . ': ' . $durationstr;
+                        }
+                        if ($pubdate !== '') {
+                            $tooltip .= "\n" . get_string('video_published', 'repository_movingimage') . ': ' . $pubdate;
+                        }
+                        if (isset($video['views'])) {
+                            $tooltip .= "\n" . get_string('video_views', 'repository_movingimage') . ': ' . $video['views'];
+                        }
+                        if (isset($video['plays'])) {
+                            $tooltip .= "\n" . get_string('video_plays', 'repository_movingimage') . ': ' . $video['plays'];
+                        }
+
 						$results[] = array(
 								'title' => pathinfo($video['title'], PATHINFO_FILENAME).'.wmv',
 								'thumbnail' => $video['thumbnail'],
-								'thumbnail_width' => 240,
-								'thumbnail_height' => 135,
+								'thumbnail_width' => 128,
+								'thumbnail_height' => 72,
 								// Higher-resolution still shown enlarged on hover and in the
 								// selection dialog (the file picker uses it as the "real" preview).
 								'realthumbnail' => $this->pick_preview_still($video),
-								'thumbnail_title'   => 'abcdefg',
+								'thumbnail_title'   => $tooltip,
 								'size' => $video['length'] * 400,
 								'date' => $video['createdDate'] / 1000,
 								'datecreated' => $video['createdDate'] / 1000,

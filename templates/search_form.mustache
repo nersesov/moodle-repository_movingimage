@@ -1,0 +1,137 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template repository_movingimage/search_form
+
+    Template for the movingimage video repository custom search form.
+
+    Context variables required for this template:
+    * repo_id - repository instance ID
+    * ctx_id - context ID
+    * seekey - session key
+    * s_value - existing search query
+    * has_players - boolean, whether players list should be shown
+    * players - array of player options
+        * id - player ID
+        * name - player label
+        * selected - boolean, whether this player is selected
+
+    Example context (json):
+    {
+        "repo_id": 4,
+        "ctx_id": 12,
+        "seekey": "abc123seekey",
+        "s_value": "test",
+        "has_players": true,
+        "players": [
+            { "id": "123", "name": "Standard Player (123)", "selected": false },
+            { "id": "456", "name": "Custom Player (456)", "selected": true }
+        ]
+    }
+}}
+<div class="repository_movingimage_search_form p-0 container-fluid" style="width: auto !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; display: inline-block !important; vertical-align: middle !important;">
+    <!-- Self-contained resilient styling to override aggressive Moodle file picker overrides -->
+    <style>
+        .repository_movingimage_search_form {
+            display: inline-block !important;
+            vertical-align: middle !important;
+            width: auto !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        /* Custom styled resilient search box and player select wrappers */
+        .mi-search-wrapper, .mi-player-wrapper {
+            display: flex !important;
+            flex-flow: row nowrap !important;
+            align-items: center !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 4px !important;
+            background-color: #fff !important;
+            padding: 1px 8px !important;
+            box-sizing: border-box !important;
+            height: 28px !important;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+        }
+        .mi-search-wrapper:focus-within, .mi-player-wrapper:focus-within {
+            border-color: #80bdff !important;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+        }
+        .mi-search-wrapper input, .mi-player-wrapper select {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            width: 100% !important;
+            height: 100% !important;
+            padding: 0 4px !important;
+            background: transparent !important;
+            margin: 0 !important;
+            display: inline-block !important;
+            font-size: 0.82rem !important;
+            line-height: normal !important;
+            color: #495057 !important;
+            box-sizing: border-box !important;
+        }
+        /* Force parent containers in Moodle picker to align inline and not crush the controls */
+        .fp-searchbar, .fp-search-form {
+            display: inline-flex !important;
+            align-items: center !important;
+            vertical-align: middle !important;
+            margin-bottom: 0 !important;
+        }
+    </style>
+
+    <!-- Standard hidden fields expected by the Moodle file picker -->
+    <input type="hidden" name="repo_id" value="{{repo_id}}" />
+    <input type="hidden" name="ctx_id" value="{{ctx_id}}" />
+    <input type="hidden" name="seekey" value="{{seekey}}" />
+    <input type="hidden" name="movingimage_searchform" value="1" />
+
+    <div style="display: flex !important; flex-flow: row wrap !important; align-items: center !important; gap: 8px !important; width: 100% !important; box-sizing: border-box !important;">
+        <!-- Fulltext search term field container -->
+        <div class="mi-search-wrapper" style="width: 200px !important; min-width: 120px !important; flex-grow: 1 !important; flex-shrink: 1 !important;">
+            <span style="display: flex !important; align-items: center !important; justify-content: center !important; margin-right: 2px !important; flex-shrink: 0 !important; padding: 0 !important;">
+                <i class="fa fa-search text-muted" style="font-size: 0.82rem !important; vertical-align: middle !important;"></i>
+            </span>
+            <input type="text" 
+                   id="movingimage_s_{{repo_id}}" 
+                   name="s" 
+                   value="{{s_value}}"
+                   placeholder="{{#str}}search, repository_movingimage{{/str}}..." />
+        </div>
+
+        <!-- Optional player selector container -->
+        {{#has_players}}
+        <div class="mi-player-wrapper" style="width: 220px !important; min-width: 140px !important; flex-grow: 1 !important; flex-shrink: 1 !important; max-width: 280px !important;">
+            <span style="display: flex !important; align-items: center !important; justify-content: center !important; margin-right: 2px !important; flex-shrink: 0 !important; padding: 0 !important;">
+                <i class="fa fa-play text-muted" style="font-size: 0.82rem !important; vertical-align: middle !important;"></i>
+            </span>
+            <select id="movingimage_player_{{repo_id}}" 
+                    name="movingimage_player">
+                <option value="">
+                    {{#str}}chooseplayer, repository_movingimage{{/str}}: {{#str}}defaultplayer, repository_movingimage{{/str}}
+                </option>
+                {{#players}}
+                <option value="{{id}}" {{#selected}}selected="selected"{{/selected}}>
+                    {{name}}
+                </option>
+                {{/players}}
+            </select>
+        </div>
+        {{/has_players}}
+    </div>
+</div>
